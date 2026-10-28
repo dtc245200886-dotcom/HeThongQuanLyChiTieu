@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Chi tiêu AI</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    .admin-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .admin-chart-grid .admin-panel{height:320px;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+    .admin-chart-grid canvas{display:block!important;width:100%!important;height:240px!important;max-height:240px}
+    .chat-shell{grid-template-columns:280px minmax(0,1fr);width:100%;max-width:none;height:calc(100vh - 150px);min-height:620px;border-radius:12px}
+    @media(max-width:1024px){.admin-chart-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.chat-shell{grid-template-columns:1fr;height:680px;min-height:680px}.chat-history{max-height:190px;border-right:0;border-bottom:1px solid var(--line)}}
+  </style>
+  <script src="/static/app.js"></script>
+</head>
+<body>
+<div class="layout" id="admin-app">
+  <aside class="admin-sidebar">
+    <div class="admin-header">
+      <div class="admin-avatar" id="admin-avatar">👑</div>
+      <div>
+        <div class="admin-title">QUẢN TRỊ VIÊN</div>
+        <div class="admin-email" id="admin-email">admin</div>
+      </div>
+    </div>
+    <nav class="admin-nav">
+      <a href="#" class="active" data-page="dashboard" onclick="adminNav(event,'dashboard')"><i class="fas fa-chart-line"></i> Tổng quan</a>
+      <a href="#" data-page="users" onclick="adminNav(event,'users')"><i class="fas fa-users"></i> Quản lý tài khoản</a>
+      <a href="#" data-page="categories" onclick="adminNav(event,'categories')"><i class="fas fa-tags"></i> Danh mục mặc định</a>
+      <a href="#" data-page="statistics" onclick="adminNav(event,'statistics')"><i class="fas fa-chart-bar"></i> Thống kê hệ thống</a>
+      <a href="#" data-page="ai" onclick="adminNav(event,'ai')"><i class="fas fa-robot"></i> Quản lý AI</a>
+      <a href="#" data-page="chat" onclick="adminNav(event,'chat')"><i class="fas fa-comments"></i> Chatbot AI</a>
+      <a href="#" data-page="logs" onclick="adminNav(event,'logs')"><i class="fas fa-exclamation-triangle"></i> Log lỗi hệ thống</a>
+      <a href="#" data-page="settings" onclick="adminNav(event,'settings')"><i class="fas fa-sliders-h"></i> Hồ sơ & Cài đặt</a>
+    </nav>
+    <div class="admin-footer">
+      <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+    </div>
+  </aside>
+  <main class="admin-main">
+    <section id="admin-dashboard" class="admin-page active">
+      <h2>📊 Tổng quan hệ thống</h2>
+      <div class="admin-stats">
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-users')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-users')}"><div>👥</div><span>Tổng người dùng</span><strong id="s-users">0</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-transactions')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-transactions')}"><div>💳</div><span>Tổng giao dịch</span><strong id="s-tx">0</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-income')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-income')}"><div>💰</div><span>Tổng thu</span><strong id="s-income">0đ</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-expense')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-expense')}"><div>💸</div><span>Tổng chi</span><strong id="s-expense">0đ</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('active-users')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('active-users')}"><div>🟢</div><span>Đang hoạt động</span><strong id="s-active">0</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('locked-users')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('locked-users')}"><div>🔒</div><span>Bị khóa</span><strong id="s-locked">0</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('ai-usage')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('ai-usage')}"><div>🤖</div><span>Lượt sử dụng AI</span><strong id="s-ai-usage">0</strong></div>
+        <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('ai-generations')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('ai-generations')}"><div>📄</div><span>Báo cáo / gợi ý AI</span><strong id="s-ai-generations">0</strong></div>
+      </div>
+      <p class="hint">Dữ liệu tổng hợp realtime từ <span id="database-type">database</span>. Nhấn thẻ để xem thống kê tương ứng.</p>
+      <div class="admin-chart-grid"><div class="admin-panel"><h3>Người dùng và giao dịch theo tháng</h3><canvas id="admin-activity-chart" height="150"></canvas></div><div class="admin-panel"><h3>Tổng thu và tổng chi theo tháng</h3><canvas id="admin-money-chart" height="150"></canvas></div><div class="admin-panel"><h3>Mức sử dụng AI theo tháng</h3><canvas id="admin-ai-chart" height="150"></canvas></div></div>
+    </section>
+
+    <section id="admin-users" class="admin-page">
+      <h2>👥 Quản lý tài khoản người dùng</h2>
+      <div class="filter-bar" style="margin-top:12px">
+        <div class="filter-row">
+          <div class="filter-field grow">
+            <label>Tìm kiếm</label>
+            <input type="text" id="user-q" placeholder="Email / họ tên..." oninput="loadUsers()" />
+          </div>
+          <div class="filter-field">
+            <label>Trạng thái</label>
+            <select id="user-status" onchange="loadUsers()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="locked">Đã khóa</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead>
+            <tr><th>STT</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr>
+          </thead>
+          <tbody id="user-list"></tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:12px">Admin KHÔNG xem chi tiết giao dịch / ngân sách / chat AI của user.</p>
+    </section>
+
+    <section id="admin-categories" class="admin-page">
+      <h2>🏷️ Danh mục mặc định hệ thống</h2>
+      <div class="admin-panel">
+        <p style="margin-bottom:12px">Gán tự động cho user mới khi đăng ký.</p>
+        <div class="cat-grid" id="def-cats"></div>
+      </div>
+    </section>
+
+    <section id="admin-statistics" class="admin-page">
+      <h2>📈 Thống kê toàn hệ thống</h2>
+      <div class="admin-panel">
+        <div class="stat-row" id="total-users"><span>Tổng số người dùng</span><strong id="st-users">0</strong></div>
+        <div class="stat-row" id="total-transactions"><span>Tổng số giao dịch</span><strong id="st-tx">0</strong></div>
+        <div class="stat-row" id="total-income"><span>Tổng thu toàn hệ thống</span><strong id="st-income">0đ</strong></div>
+        <div class="stat-row" id="total-expense"><span>Tổng chi toàn hệ thống</span><strong id="st-expense">0đ</strong></div>
+        <div class="stat-row" id="active-users"><span>Tài khoản đang hoạt động</span><strong id="st-active">0</strong></div>
+        <div class="stat-row" id="locked-users"><span>Số tài khoản bị khóa</span><strong id="st-locked">0</strong></div>
+        <div class="stat-row" id="ai-usage"><span>Số lượt sử dụng AI</span><strong id="st-ai-usage">0</strong></div>
+        <div class="stat-row" id="ai-generations"><span>Số báo cáo/gợi ý AI</span><strong id="st-ai-generations">0</strong></div>
+        <div class="stat-row" id="ai-warnings"><span>Số cảnh báo/lỗi AI</span><strong id="st-ai-warnings">0</strong></div>
+      </div>
+    </section>
+
+    <section id="admin-ai" class="admin-page">
+      <h2>🤖 Quản lý AI</h2>
+      <div class="admin-panel">
+        <div class="stat-row"><span>Trạng thái AI</span><strong id="ai-status" style="color:#16a34a">—</strong></div>
+        <div class="stat-row"><span>Provider</span><strong id="ai-provider">—</strong></div>
+        <div class="stat-row"><span>Số phiên hỏi đáp AI</span><strong id="ai-chat">0</strong></div>
+        <div class="stat-row"><span>Số báo cáo AI đã sinh</span><strong id="ai-report">0</strong></div>
+        <div class="stat-row"><span>Số lần AI lỗi</span><strong id="ai-fail">0</strong></div>
+        <p class="hint" style="margin-top:12px">Chỉ metadata — không xem nội dung chat/báo cáo của user.</p>
+        <h4 style="margin:16px 0 8px">Log AI gần đây</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>User ID</th><th>Loại</th><th>OK</th><th>Lỗi</th><th>Thời gian</th></tr></thead>
+            <tbody id="ai-log-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="admin-chat" class="admin-page">
+      <h2>💬 Chatbot AI</h2>
+      <div class="chat-shell">
+        <aside class="chat-history">
+          <button class="btn btn-indigo chat-new-btn" onclick="createAdminChatConversation()"><i class="fas fa-plus"></i> Cuộc trò chuyện mới</button>
+          <div id="admin-chat-history-list" class="chat-history-list"></div>
+        </aside>
+        <section class="chat-main">
+          <div class="chat-header"><div><strong id="admin-chat-title">Cuộc trò chuyện mới</strong><small>Hội thoại riêng của Admin</small></div><button id="admin-chat-delete-btn" class="btn btn-danger btn-sm" onclick="requestAdminDeleteChat()" disabled><i class="fas fa-trash"></i></button></div>
+          <div id="admin-chat-messages" class="chat-messages"><div class="chat-empty">Chọn một cuộc trò chuyện hoặc tạo cuộc trò chuyện mới.</div></div>
+          <div id="admin-chat-image-preview" class="chat-image-preview hidden"></div><form class="chat-composer" onsubmit="sendAdminChatMessage(event)"><input id="admin-chat-image" type="file" accept="image/jpeg,image/png" hidden onchange="selectAdminChatImage(event)" /><button class="chat-attach-btn" type="button" title="Đính kèm ảnh" aria-label="Đính kèm ảnh" onclick="document.getElementById('admin-chat-image').click()"><i class="fas fa-paperclip"></i></button><input id="admin-chat-q" autocomplete="off" placeholder="Nhập câu hỏi..." onkeydown="if(event.key === 'Enter' && !event.shiftKey){event.preventDefault();sendAdminChatMessage(event)}" /><button class="btn btn-indigo" type="submit" aria-label="Gửi tin nhắn"><i class="fas fa-paper-plane"></i></button></form>
+        </section>
+      </div>
+    </section>
+
+    <section id="admin-logs" class="admin-page">
+      <h2>⚠️ Log lỗi hệ thống</h2>
+      <div class="admin-panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Level</th><th>Source</th><th>Message</th><th>Thời gian</th></tr></thead>
+            <tbody id="sys-log-list"><tr><td colspan="4" class="empty-state">Chưa có lỗi</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="admin-settings" class="admin-page">
+      <h2>⚙️ Hồ sơ & Cài đặt</h2>
+      <div class="settings-grid">
+        <section class="settings-card">
+          <h3>Thông tin cá nhân</h3>
+          <p>Email và vai trò do hệ thống quản lý, chỉ có thể xem.</p>
+          <form onsubmit="saveAdminProfile(event)">
+            <div class="profile-avatar-wrap"><div class="admin-avatar profile-avatar" id="admin-profile-avatar">A</div><span class="hint">Ảnh đại diện từ đường dẫn URL</span></div>
+            <div class="form-group"><label>Ảnh đại diện</label><input id="admin-profile-avatar-url" type="url" placeholder="https://..." /></div>
+            <div class="form-group"><label>Họ tên</label><input id="admin-profile-name" required minlength="2" /></div>
+            <div class="form-group"><label>Email</label><input id="admin-profile-email" disabled /></div>
+            <div class="form-group"><label>Vai trò</label><input id="admin-profile-role" disabled /></div>
+            <button class="btn btn-indigo" type="submit"><i class="fas fa-check"></i> Lưu thông tin</button>
+          </form>
+        </section>
+        <section class="settings-card">
+          <h3>Giao diện</h3>
+          <p>Lựa chọn này được lưu lại cho lần đăng nhập sau.</p>
+          <div class="theme-row"><span><strong>Dark mode</strong><br><small class="hint">Giữ nguyên hệ màu tài chính</small></span><label class="switch"><input id="admin-theme-toggle" type="checkbox" onchange="toggleAdminTheme(this.checked)" /><span></span></label></div>
+          <button class="btn btn-outline" type="button" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+        </section>
+        <section class="settings-card">
+          <h3>Đổi mật khẩu</h3>
+          <p>Chỉ mở biểu mẫu khi bạn cần thay đổi mật khẩu.</p>
+          <button id="admin-change-password-toggle" class="btn btn-outline" type="button" onclick="toggleAdminPasswordForm()"><i class="fas fa-key"></i> Đổi mật khẩu</button>
+          <form id="admin-change-password-form" class="hidden" onsubmit="changeAdminPassword(event)">
+            <p>Sử dụng ít nhất 8 ký tự, gồm chữ và số.</p>
+            <div class="form-group"><label>Mật khẩu hiện tại</label><input id="admin-old-password" type="password" required /></div>
+            <div class="form-group"><label>Mật khẩu mới</label><input id="admin-new-password" type="password" minlength="8" required /></div>
+            <div class="form-group"><label>Xác nhận mật khẩu mới</label><input id="admin-confirm-password" type="password" minlength="8" required /></div>
+            <div class="modal-actions"><button class="btn btn-outline" type="button" onclick="toggleAdminPasswordForm(false)">Hủy</button><button class="btn btn-indigo" type="submit">Xác nhận đổi mật khẩu</button></div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="modal-overlay" id="modal-logout" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+  <div class="modal modal-confirm">
+    <h3 id="logout-title">Xác nhận đăng xuất</h3>
+    <p>Bạn có chắc muốn đăng xuất không?</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" onclick="cancelLogout()">Hủy</button>
+      <button type="button" class="btn btn-danger" onclick="confirmLogout()">Đăng xuất</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-admin-chat-delete" role="dialog" aria-modal="true" aria-labelledby="admin-chat-delete-title">
+  <div class="modal modal-confirm">
+    <h3 id="admin-chat-delete-title">Xóa cuộc trò chuyện?</h3>
+    <p>Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa.</p>
+    <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="cancelAdminDeleteChat()">Hủy</button><button type="button" class="btn btn-danger" onclick="confirmAdminDeleteChat()">Xóa cuộc trò chuyện</button></div>
+  </div>
+</div>
+<script>
+
+function adminNav(e, page) {
+  e.preventDefault();
+  document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('admin-' + page).classList.add('active');
+  if (page === 'dashboard' || page === 'statistics') loadStats();
+  if (page === 'users') loadUsers();
+  if (page === 'categories') loadDefCats();
+  if (page === 'ai') { loadStats(); loadAILogs(); }
+  if (page === 'chat') loadAdminChatConversations();
+  if (page === 'logs') loadSysLogs();
+  if (page === 'settings') loadAdminProfile();
+}
+
+let adminActivityChart = null;
+let adminMoneyChart = null;
+let adminAIChart = null;
+
+function focusAdminStat(id) {
+  const link = document.querySelector('.admin-nav a[data-page="statistics"]');
+  if (link) link.click();
+  setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+}
+
+function renderAdminCharts(points) {
+  if (typeof Chart === 'undefined') return;
+  if (adminActivityChart) adminActivityChart.destroy();
+  if (adminMoneyChart) adminMoneyChart.destroy();
+  if (adminAIChart) adminAIChart.destroy();
+  const labels = points.map(point => point.label);
+  const common = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true } } };
+  adminActivityChart = new Chart(document.getElementById('admin-activity-chart'), { type: 'line', data: { labels, datasets: [{ label: 'Người dùng mới', data: points.map(point => point.users), borderColor: '#1e3a5f', backgroundColor: 'rgba(30,58,95,.12)', tension: .25 }, { label: 'Giao dịch', data: points.map(point => point.transactions), borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,.12)', tension: .25 }] }, options: common });
+  adminMoneyChart = new Chart(document.getElementById('admin-money-chart'), { type: 'bar', data: { labels, datasets: [{ label: 'Tổng thu', data: points.map(point => point.income), backgroundColor: '#0f766e' }, { label: 'Tổng chi', data: points.map(point => point.expense), backgroundColor: '#8796a5' }] }, options: common });
+  adminAIChart = new Chart(document.getElementById('admin-ai-chart'), { type: 'line', data: { labels, datasets: [{ label: 'Lượt sử dụng AI', data: points.map(point => point.ai_usage), borderColor: '#6b7f91', backgroundColor: 'rgba(107,127,145,.12)', tension: .25 }] }, options: common });
+}
+
+async function loadStats() {
+  try {
+    const s = await api('/api/admin/stats');
+    document.getElementById('s-users').textContent = s.total_users;
+    document.getElementById('s-tx').textContent = s.total_transactions;
+    document.getElementById('s-income').textContent = fmt(s.total_income);
+    document.getElementById('s-expense').textContent = fmt(s.total_expense);
+    document.getElementById('s-active').textContent = s.active_users;
+    document.getElementById('s-locked').textContent = s.locked_users;
+    document.getElementById('s-ai-usage').textContent = s.ai_usage_count;
+    document.getElementById('s-ai-generations').textContent = s.ai_report_count + s.ai_suggest_count;
+    document.getElementById('database-type').textContent = s.database_type;
+    document.getElementById('st-users').textContent = s.total_users;
+    document.getElementById('st-tx').textContent = s.total_transactions;
+    document.getElementById('st-income').textContent = fmt(s.total_income);
+    document.getElementById('st-expense').textContent = fmt(s.total_expense);
+    document.getElementById('st-locked').textContent = s.locked_users;
+    document.getElementById('st-active').textContent = s.active_users;
+    document.getElementById('st-ai-usage').textContent = s.ai_usage_count;
+    document.getElementById('st-ai-generations').textContent = s.ai_report_count + s.ai_suggest_count;
+    document.getElementById('st-ai-warnings').textContent = s.ai_fail_count;
+    document.getElementById('ai-status').textContent = s.ai_status;
+    document.getElementById('ai-provider').textContent = s.ai_provider || 'mock';
+    document.getElementById('ai-chat').textContent = s.ai_chat_count;
+    document.getElementById('ai-report').textContent = s.ai_report_count;
+    document.getElementById('ai-fail').textContent = s.ai_fail_count;
+    renderAdminCharts(s.by_month || []);
+  } catch (e) { toast(e.message, false); }
+}
+
+async function loadUsers() {
+  const q = document.getElementById('user-q').value.trim();
+  const st = document.getElementById('user-status').value;
+  let url = '/api/admin/users?';
+  if (q) url += 'q=' + encodeURIComponent(q) + '&';
+  if (st) url += 'status=' + st;
+  try {
+    const users = await api(url);
+    const tbody = document.getElementById('user-list');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Không có user</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map((u, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(u.full_name || '—')}</td>
+        <td>${escapeHtml(u.email)}</td>
+        <td>${u.role}</td>
+        <td><span class="badge ${u.status === 'temporary_locked' ? 'badge-warning' : u.status === 'disabled' ? 'badge-locked' : 'badge-ok'}">${u.status === 'temporary_locked' ? 'Khóa tạm thời' : u.status === 'disabled' ? 'Vô hiệu hóa' : 'Đang hoạt động'}</span></td>
+        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '—'}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="toggleLock(${u.id},'${u.status}')">${u.status === 'disabled' ? 'Mở khóa' : 'Vô hiệu hóa'}</button>
+          <button class="btn btn-outline btn-sm" onclick="setRole(${u.id})">Phân quyền</button>
+          <button class="btn btn-danger btn-sm" onclick="delUser(${u.id})">Xóa</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) { toast(e.message, false); }
+}
+
+async function toggleLock(id, status) {
+  const next = status === 'disabled' ? 'active' : 'locked';
+  try {
+    await api('/api/admin/users/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status: next }) });
+    toast(next === 'locked' ? 'Đã khóa tài khoản' : 'Đã mở khóa');
+    loadUsers(); loadStats();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function setRole(id) {
+  const role = prompt('Nhập role (user/admin):', 'user');
+  if (!role || !['user', 'admin'].includes(role)) return;
+  try {
+    await api('/api/admin/users/' + id + '/role', { method: 'PUT', body: JSON.stringify({ role }) });
+    toast('Đã cập nhật quyền');
+    loadUsers();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function delUser(id) {
+  if (!confirm('Xóa vĩnh viễn user và toàn bộ dữ liệu?')) return;
+  try {
+    await api('/api/admin/users/' + id, { method: 'DELETE' });
+    toast('Đã xóa user');
+    loadUsers(); loadStats();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function loadDefCats() {
+  try {
+    const cats = await api('/api/admin/default-categories');
+    document.getElementById('def-cats').innerHTML = cats.map(c =>
+      `<div class="cat-item"><span class="icon">${escapeHtml(c.icon || '📁')}</span><div><div class="name">${escapeHtml(c.name)}</div><div class="type" style="font-size:12px;color:#9ca3af">${escapeHtml(c.type)}</div></div></div>`
+    ).join('') || '<p class="empty-state">Chưa có</p>';
+  } catch (e) { toast(e.message, false); }
+}
+
+async function loadAILogs() {
+  try {
+    const logs = await api('/api/admin/ai-logs?limit=30');
+    const tbody = document.getElementById('ai-log-list');
+    tbody.innerHTML = logs.length ? logs.map(l => `
+      <tr>
+        <td>${l.id}</td><td>${l.user_id}</td><td>${l.kind}</td>
+        <td>${l.success ? '✅' : '❌'}</td>
+        <td>${escapeHtml(l.error_message || '—')}</td>
+        <td>${l.created_at ? new Date(l.created_at).toLocaleString('vi-VN') : '—'}</td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Chưa có log AI</td></tr>';
+  } catch (e) { toast(e.message, false); }
+}
+
+async function loadSysLogs() {
+  try {
+    const logs = await api('/api/admin/logs?limit=50');
+    const tbody = document.getElementById('sys-log-list');
+    tbody.innerHTML = logs.length ? logs.map(l => `
+      <tr>
+        <td>${escapeHtml(l.level)}</td><td>${escapeHtml(l.source || '—')}</td>
+        <td>${escapeHtml(l.message)}</td>
+        <td>${l.created_at ? new Date(l.created_at).toLocaleString('vi-VN') : '—'}</td>
+      </tr>`).join('') : '<tr><td colspan="4" class="empty-state">Chưa có lỗi hệ thống</td></tr>';
+  } catch (e) { toast(e.message, false); }
+}
+
+function applyAdminTheme(dark) {
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  const toggle = document.getElementById('admin-theme-toggle');
+  if (toggle) toggle.checked = dark;
+}
+function toggleAdminTheme(dark) {
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+  applyAdminTheme(dark);
+}
+async function loadAdminProfile() {
+  try {
+    const me = await api('/api/auth/me');
+    document.getElementById('admin-profile-email').value = me.email || '';
+    document.getElementById('admin-profile-name').value = me.full_name || '';
+    document.getElementById('admin-profile-role').value = me.role === 'admin' ? 'Quản trị viên' : 'Người dùng';
+    document.getElementById('admin-profile-avatar-url').value = me.avatar || '';
+    setAvatar(document.getElementById('admin-profile-avatar'), me.avatar, me.full_name, 'A');
+    setAvatar(document.getElementById('admin-avatar'), me.avatar, me.full_name, 'A');
+  } catch (e) { toast(e.message, false); }
+}
+async function saveAdminProfile(e) {
+  e.preventDefault();
+  try {
+    const name = document.getElementById('admin-profile-name').value.trim();
+    const avatar = document.getElementById('admin-profile-avatar-url').value.trim();
+    const result = await api('/api/auth/profile', { method: 'PUT', body: JSON.stringify({ full_name: name, avatar }) });
+    sessionStorage.setItem('full_name', result.full_name || name);
+    sessionStorage.setItem('avatar', result.avatar || '');
+    document.getElementById('admin-email').textContent = sessionStorage.getItem('email') || '';
+    setAvatar(document.getElementById('admin-avatar'), result.avatar, result.full_name || name, 'A');
+    setAvatar(document.getElementById('admin-profile-avatar'), result.avatar, result.full_name || name, 'A');
+    toast('Đã cập nhật thông tin');
+  } catch (e) { toast(e.message, false); }
+}
+function toggleAdminPasswordForm(show = true) {
+  const form = document.getElementById('admin-change-password-form');
+  const button = document.getElementById('admin-change-password-toggle');
+  form.classList.toggle('hidden', !show);
+  button.classList.toggle('hidden', show);
+  if (!show) form.reset();
+}
+async function changeAdminPassword(e) {
+  e.preventDefault();
+  const newPassword = document.getElementById('admin-new-password').value;
+  if (newPassword !== document.getElementById('admin-confirm-password').value) { toast('Xác nhận mật khẩu không khớp', false); return; }
+  try {
+    await api('/api/auth/change-password', { method: 'PUT', body: JSON.stringify({ old_password: document.getElementById('admin-old-password').value, new_password: newPassword }) });
+    e.target.reset();
+    toggleAdminPasswordForm(false);
+    toast('Đã đổi mật khẩu');
+  } catch (e) { toast(e.message, false); }
+}
+
+let adminChatConversations = [];
+let activeAdminChatId = 0;
+let adminChatSending = false;
+let adminChatDraftActive = false;
+let attachedAdminChatImage = null;
+function renderAdminChatHistory() {
+  document.getElementById('admin-chat-history-list').innerHTML = adminChatConversations.length ? adminChatConversations.map(chat => `<button class="chat-history-item ${chat.id === activeAdminChatId ? 'active' : ''}" onclick="openAdminChatConversation(${chat.id})"><strong>${escapeHtml(chat.title)}</strong><small>${chat.message_count} tin nhắn</small></button>`).join('') : '<div class="chat-empty small">Chưa có cuộc trò chuyện</div>';
+}
+async function loadAdminChatConversations(selectLatest = true) {
+  try {
+    adminChatConversations = await api('/api/chat/conversations');
+    renderAdminChatHistory();
+    if (selectLatest && adminChatConversations.length) await openAdminChatConversation(adminChatConversations[0].id);
+    else if (!adminChatConversations.length) resetAdminChatView();
+  } catch (e) { toast(e.message, false); }
+}
+function resetAdminChatView() {
+  activeAdminChatId = 0;
+  adminChatDraftActive = false;
+  document.getElementById('admin-chat-title').textContent = 'Cuộc trò chuyện mới';
+  document.getElementById('admin-chat-messages').innerHTML = '<div class="chat-empty">Tạo cuộc trò chuyện mới để bắt đầu.</div>';
+  document.getElementById('admin-chat-delete-btn').disabled = true;
+  renderAdminChatHistory();
+}
+async function createAdminChatConversation() {
+  activeAdminChatId = 0;
+  adminChatDraftActive = true;
+  document.getElementById('admin-chat-title').textContent = 'Cuộc trò chuyện mới';
+  document.getElementById('admin-chat-delete-btn').disabled = true;
+  document.getElementById('admin-chat-messages').innerHTML = '<div class="chat-empty">Hãy gửi câu hỏi đầu tiên.</div>';
+  renderAdminChatHistory();
+  document.getElementById('admin-chat-q').focus();
+}
+async function openAdminChatConversation(id) {
+  const chat = adminChatConversations.find(item => item.id === id);
+  if (!chat) return;
+  try {
+    activeAdminChatId = id;
+    adminChatDraftActive = false;
+    document.getElementById('admin-chat-title').textContent = chat.title;
+    document.getElementById('admin-chat-delete-btn').disabled = false;
+    renderAdminChatHistory();
+    const messages = await api('/api/chat/conversations/' + id + '/messages');
+    renderAdminChatMessages(messages);
+  } catch (e) { toast(e.message, false); }
+}
+function renderAdminChatMessages(messages) {
+  const output = document.getElementById('admin-chat-messages');
+  output.innerHTML = messages.length ? messages.map(message => `<div class="chat-message ${message.role === 'user' ? 'user' : 'assistant'}"><div class="chat-avatar">${message.role === 'user' ? 'A' : 'AI'}</div><div><small class="chat-author">${message.role === 'user' ? 'Admin' : 'Trợ lý AI'}</small><div class="chat-bubble">${escapeHtml(message.content).replace(/\n/g, '<br>')}</div>${message.role === 'assistant' ? adminChatMessageActions(message.id) : ''}</div></div>`).join('') : '<div class="chat-empty">Hãy gửi câu hỏi đầu tiên.</div>';
+  requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; });
+}
+function adminChatMessageActions(messageId) { return `<div class="chat-actions"><button class="chat-action-btn" type="button" title="Sao chép phản hồi" aria-label="Sao chép phản hồi" onclick="copyAdminChatMessage(${messageId})"><i class="fas fa-copy"></i></button><button class="chat-action-btn" data-feedback-message="${messageId}" data-feedback="helpful" type="button" title="Đánh dấu hữu ích" aria-label="Đánh dấu hữu ích" onclick="feedbackAdminChatMessage(${messageId}, 'helpful')"><i class="fas fa-thumbs-up"></i></button><button class="chat-action-btn" data-feedback-message="${messageId}" data-feedback="not_helpful" type="button" title="Đánh dấu không hữu ích" aria-label="Đánh dấu không hữu ích" onclick="feedbackAdminChatMessage(${messageId}, 'not_helpful')"><i class="fas fa-thumbs-down"></i></button><button class="chat-action-btn" type="button" title="Tải xuống tệp TXT" aria-label="Tải xuống tệp TXT" onclick="downloadAdminChatMessage(${messageId}, 'txt')"><i class="fas fa-file-lines"></i></button><button class="chat-action-btn" type="button" title="Tải xuống tệp PDF" aria-label="Tải xuống tệp PDF" onclick="downloadAdminChatMessage(${messageId}, 'pdf')"><i class="fas fa-file-pdf"></i></button></div>`; }
+function selectAdminChatImage(event) { const file = event.target.files[0]; if (!file) return; if (!['image/jpeg', 'image/png'].includes(file.type)) { toast('Chỉ hỗ trợ ảnh JPG, JPEG hoặc PNG.', false); event.target.value = ''; return; } attachedAdminChatImage = file; const preview = document.getElementById('admin-chat-image-preview'); preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Ảnh đính kèm"><button type="button" onclick="clearAdminChatImage()" aria-label="Bỏ ảnh"><i class="fas fa-times"></i></button>`; preview.classList.remove('hidden'); }
+function clearAdminChatImage() { attachedAdminChatImage = null; document.getElementById('admin-chat-image').value = ''; document.getElementById('admin-chat-image-preview').classList.add('hidden'); }
+async function copyAdminChatMessage(messageId) { const messages = await api('/api/chat/conversations/' + activeAdminChatId + '/messages'); const item = messages.find(row => row.id === messageId); if (item) { await navigator.clipboard.writeText(item.content); toast('Đã sao chép'); } }
+async function feedbackAdminChatMessage(messageId, feedbackType) { try { await api('/api/chat/messages/' + messageId + '/feedback', { method: 'POST', body: JSON.stringify({ feedback_type: feedbackType }) }); document.querySelectorAll(`[data-feedback-message="${messageId}"]`).forEach(button => button.classList.toggle('selected', button.dataset.feedback === feedbackType)); toast('Đã ghi nhận phản hồi'); } catch (e) { toast('Không thể lưu đánh giá', false); } }
+async function downloadAdminChatMessage(messageId, format) {
+  try {
+    const response = await fetch('/api/chat/messages/' + messageId + '/download?format=' + format, { headers: { Authorization: 'Bearer ' + token() } });
+    if (!response.ok) throw new Error('Không thể tải phản hồi');
+    const blob = await response.blob();
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'phan-hoi-ai-' + messageId + '.' + format; link.click(); URL.revokeObjectURL(link.href);
+  } catch (e) { toast(e.message, false); }
+}
+async function sendAdminChatMessage(e) {
+  e.preventDefault();
+  const input = document.getElementById('admin-chat-q');
+  const content = input.value.trim();
+  if ((!content && !attachedAdminChatImage) || adminChatSending) return;
+  if (!activeAdminChatId && !adminChatDraftActive) return;
+  adminChatSending = true;
+  input.value = '';
+  input.disabled = true;
+  const output = document.getElementById('admin-chat-messages');
+  output.insertAdjacentHTML('beforeend', `<div class="chat-message user"><div class="chat-avatar">A</div><div><small class="chat-author">Admin</small><div class="chat-bubble">${escapeHtml(content).replace(/\n/g, '<br>')}</div></div></div><div class="chat-message assistant pending"><div class="chat-avatar">AI</div><div><small class="chat-author">Trợ lý AI</small><div class="chat-bubble"><span class="chat-status"><i class="fas fa-circle-notch fa-spin"></i> AI đang suy nghĩ...</span></div></div></div>`);
+  requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; });
+  try {
+    const conversationId = activeAdminChatId || 0;
+    let result;
+    if (attachedAdminChatImage) {
+      const formData = new FormData(); formData.append('file', attachedAdminChatImage); formData.append('content', content);
+      const response = await fetch('/api/chat/conversations/' + conversationId + '/messages/with-image', { method: 'POST', headers: { Authorization: 'Bearer ' + token() }, body: formData });
+      result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.detail || 'Không thể xử lý ảnh');
+    } else {
+      result = await api('/api/chat/conversations/' + conversationId + '/messages', { method: 'POST', body: JSON.stringify({ content }) });
+    }
+    if (!activeAdminChatId) {
+      activeAdminChatId = result.conversation_id;
+      adminChatDraftActive = false;
+      adminChatConversations.unshift({ id: result.conversation_id, title: result.title, message_count: 0 });
+      document.getElementById('admin-chat-title').textContent = result.title;
+      document.getElementById('admin-chat-delete-btn').disabled = false;
+      renderAdminChatHistory();
+    }
+    const pending = output.querySelector('.pending');
+    if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-avatar">AI</div><div><small class="chat-author">${result.source === 'AI' ? '🤖 AI' : '📊 Dữ liệu nội bộ'}</small><div class="chat-bubble">${escapeHtml(result.assistant_message.content).replace(/\n/g, '<br>')}</div>${adminChatMessageActions(result.assistant_message.id)}</div></div>`;
+    clearAdminChatImage();
+    const chat = adminChatConversations.find(item => item.id === activeAdminChatId);
+    if (chat) { chat.title = result.title || chat.title; chat.message_count += 2; document.getElementById('admin-chat-title').textContent = chat.title; }
+    renderAdminChatHistory();
+  } catch (err) {
+    const pending = output.querySelector('.pending');
+    const message = chatErrorMessage(err);
+    if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-bubble error">${escapeHtml(message)}${message.includes('quá dài') ? ' <button type="button" class="chat-new-inline" onclick="createAdminChatConversation()">Cuộc trò chuyện mới</button>' : ''}</div></div>`;
+  } finally { adminChatSending = false; input.disabled = false; input.focus(); requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; }); }
+}
+function requestAdminDeleteChat() { if (activeAdminChatId) document.getElementById('modal-admin-chat-delete').classList.add('show'); }
+function cancelAdminDeleteChat() { document.getElementById('modal-admin-chat-delete').classList.remove('show'); }
+async function confirmAdminDeleteChat() {
+  if (!activeAdminChatId) return;
+  try {
+    await api('/api/chat/conversations/' + activeAdminChatId, { method: 'DELETE' });
+    adminChatConversations = adminChatConversations.filter(chat => chat.id !== activeAdminChatId);
+    cancelAdminDeleteChat();
+    activeAdminChatId = adminChatConversations[0]?.id || 0;
+    if (activeAdminChatId) await openAdminChatConversation(activeAdminChatId); else resetAdminChatView();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function initAdminApp() {
+  if (!await requireAuth('admin')) return;
+  document.getElementById('admin-email').textContent = sessionStorage.getItem('email') || 'admin';
+  applyAdminTheme(localStorage.getItem('theme') === 'dark');
+  setAvatar(document.getElementById('admin-avatar'), sessionStorage.getItem('avatar'), sessionStorage.getItem('full_name'), 'A');
+  loadStats();
+}
+
+initAdminApp();
+</script>
+</body>
+</html>

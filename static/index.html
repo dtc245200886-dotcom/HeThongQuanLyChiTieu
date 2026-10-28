@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chi tiêu AI</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    .chat-shell{grid-template-columns:280px minmax(0,1fr);width:100%;max-width:none;height:calc(100vh - 150px);min-height:620px;border-radius:12px}
+    .ai-history-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.ai-history-panel h3{font-size:13px;color:var(--navy);margin-bottom:8px}.ai-history-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}.ai-history-item{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:10px 12px;border:1px solid transparent;border-radius:8px;background:var(--surface-soft);color:var(--text);text-align:left}.ai-history-item:hover,.ai-history-item:focus{background:var(--surface);border-color:var(--teal)}.ai-history-item strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.ai-history-item small{font-size:11px;color:var(--muted)}.ai-history-empty{padding:12px;color:var(--muted);font-size:12px;text-align:center;background:var(--surface-soft);border-radius:8px}
+    @media(max-width:768px){.chat-shell{grid-template-columns:1fr;height:680px;min-height:680px}.chat-history{max-height:190px;border-right:0;border-bottom:1px solid var(--line)}}
+  </style>
+  <script src="/static/app.js"></script>
+</head>
+<body>
+<div class="layout" id="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="user-avatar" id="avatar">U</div>
+      <div>
+        <div class="title">Chi tiêu AI</div>
+        <div class="email" id="user-label"></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-link active" data-page="dashboard" onclick="nav(event,'dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a href="#" class="nav-link" data-page="transactions" onclick="nav(event,'transactions')"><i class="fas fa-exchange-alt"></i> Giao dịch</a>
+      <a href="#" class="nav-link" data-page="budgets" onclick="nav(event,'budgets')"><i class="fas fa-wallet"></i> Ngân sách</a>
+      <a href="#" class="nav-link" data-page="goals" onclick="nav(event,'goals')"><i class="fas fa-bullseye"></i> Mục tiêu</a>
+      <a href="#" class="nav-link" data-page="categories" onclick="nav(event,'categories')"><i class="fas fa-tags"></i> Danh mục</a>
+      <a href="#" class="nav-link" data-page="settings" onclick="nav(event,'settings')"><i class="fas fa-sliders-h"></i> Cài đặt</a>
+      <div class="nav-section">AI</div>
+      <a href="#" class="nav-link" data-page="ai-report" onclick="nav(event,'ai-report')"><i class="fas fa-robot"></i> Báo cáo AI</a>
+      <a href="#" class="nav-link" data-page="ai-chat" onclick="nav(event,'ai-chat')"><i class="fas fa-comments"></i> Hỏi đáp AI</a>
+      <a href="#" class="nav-link" data-page="ai-suggest" onclick="nav(event,'ai-suggest')"><i class="fas fa-lightbulb"></i> Gợi ý ngân sách</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="notification-center">
+      <button id="notification-bell" class="notification-bell" type="button" aria-label="Thông báo" onclick="toggleNotifications()">
+        <i class="fas fa-bell"></i><span id="notification-count" class="notification-count hidden">0</span>
+      </button>
+      <div id="notification-panel" class="notification-panel hidden">
+        <div class="notification-panel-header"><strong>Thông báo</strong><div class="notification-panel-actions"><button type="button" title="Đánh dấu tất cả đã đọc" onclick="markAllNotificationsRead()"><i class="fas fa-check-double"></i></button><button type="button" title="Xóa tất cả thông báo" onclick="deleteAllNotifications()"><i class="fas fa-trash"></i></button><button type="button" class="notification-close" onclick="toggleNotifications(false)">&times;</button></div></div>
+        <div id="notification-list" class="notification-list"><div class="notification-empty">Chưa có thông báo</div></div>
+      </div>
+    </div>
+    <div id="page-dashboard" class="page active">
+      <h2 class="page-title">📊 Dashboard</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Thu nhập</div><div class="value green" id="sum-income">0đ</div></div>
+        <div class="stat-card"><div class="label">Chi tiêu</div><div class="value red" id="sum-expense">0đ</div></div>
+        <div class="stat-card"><div class="label">Số dư</div><div class="value indigo" id="sum-balance">0đ</div></div>
+        <div class="stat-card"><div class="label">Tỷ lệ tiết kiệm</div><div class="value purple" id="sum-rate">0%</div></div>
+        <div class="stat-card"><div class="label">Mục tiêu đang thực hiện</div><div class="value indigo" id="sum-goals-active">0</div></div>
+        <div class="stat-card"><div class="label">Mục tiêu hoàn thành</div><div class="value green" id="sum-goals-done">0</div></div>
+        <div class="stat-card"><div class="label">Mục tiêu vượt kế hoạch</div><div class="value purple" id="sum-goals-over">0</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Chi theo danh mục</h3><canvas id="chart-cat" height="220"></canvas></div>
+        <div class="chart-card"><h3>Thu / Chi theo tháng</h3><canvas id="chart-month" height="220"></canvas></div>
+      </div>
+    </div>
+
+    <div id="page-transactions" class="page">
+      <div class="page-title">
+        <span>💸 Giao dịch</span>
+        <div class="section-actions">
+          <button class="btn btn-indigo" onclick="showTxModal()"><i class="fas fa-plus"></i> Thêm</button>
+          <button id="tx-edit-btn" class="btn btn-outline" onclick="editSelected('tx')" disabled><i class="fas fa-pen"></i> Sửa</button>
+          <button id="tx-delete-btn" class="btn btn-danger" onclick="deleteSelected('tx')" disabled><i class="fas fa-trash"></i> Xóa</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-row">
+          <div class="filter-field grow"><label>Từ khóa</label><input id="tx-q" oninput="loadTx()" /></div>
+          <div class="filter-field"><label>Loại</label>
+            <select id="tx-type" onchange="loadTx()"><option value="">Tất cả</option><option value="income">Thu</option><option value="expense">Chi</option></select>
+          </div>
+          <div class="filter-field"><label>Danh mục</label><select id="tx-category" onchange="loadTx()"><option value="">Tất cả</option></select></div>
+          <div class="filter-field"><label>Từ ngày</label><input type="date" id="tx-from" onchange="loadTx()" /></div>
+          <div class="filter-field"><label>Đến ngày</label><input type="date" id="tx-to" onchange="loadTx()" /></div>
+          <div class="filter-field"><label>Sắp xếp</label><select id="tx-sort" onchange="loadTx()"><option value="date:desc">Mới nhất</option><option value="date:asc">Cũ nhất</option><option value="amount:desc">Số tiền giảm dần</option><option value="amount:asc">Số tiền tăng dần</option></select></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Loại</th><th class="text-right">Số tiền</th><th>Ghi chú</th><th></th></tr></thead>
+          <tbody id="tx-body"></tbody>
+        </table>
+      </div>
+      <div id="tx-pagination" class="pagination"></div>
+    </div>
+
+    <div id="page-budgets" class="page">
+      <div class="page-title"><span>💳 Ngân sách</span>
+        <div class="section-actions">
+          <button class="btn btn-indigo" onclick="showBudgetModal()"><i class="fas fa-plus"></i> Thêm</button>
+          <button id="budget-edit-btn" class="btn btn-outline" onclick="editSelected('budget')" disabled><i class="fas fa-pen"></i> Sửa</button>
+          <button id="budget-delete-btn" class="btn btn-danger" onclick="deleteSelected('budget')" disabled><i class="fas fa-trash"></i> Xóa</button>
+        </div>
+      </div>
+      <div class="filter-bar"><div class="filter-row">
+        <div class="filter-field grow"><label>Tìm ngân sách</label><input id="budget-q" oninput="renderBudgets()" placeholder="Danh mục..." /></div>
+        <div class="filter-field"><label>Tháng</label><select id="bf-month" onchange="loadBudgets()"></select></div>
+        <div class="filter-field"><label>Năm</label><select id="bf-year" onchange="loadBudgets()"></select></div>
+        <div class="filter-field"><label>Danh mục</label><select id="bf-category" onchange="loadBudgets()"><option value="">Tất cả</option></select></div>
+      </div></div>
+      <div class="card-grid" id="budget-list"></div>
+    </div>
+
+    <div id="page-goals" class="page">
+      <div class="page-title"><span>🎯 Mục tiêu tiết kiệm</span>
+        <div class="section-actions">
+          <button class="btn btn-indigo" onclick="showGoalModal()"><i class="fas fa-plus"></i> Thêm</button>
+          <button id="goal-edit-btn" class="btn btn-outline" onclick="editSelected('goal')" disabled><i class="fas fa-pen"></i> Sửa</button>
+          <button id="goal-delete-btn" class="btn btn-danger" onclick="deleteSelected('goal')" disabled><i class="fas fa-trash"></i> Xóa</button>
+        </div>
+      </div>
+      <div class="filter-bar"><div class="filter-row"><div class="filter-field grow"><label>Tìm mục tiêu</label><input id="goal-q" oninput="renderGoals()" placeholder="Tên mục tiêu..." /></div></div></div>
+      <div class="card-grid" id="goal-list"></div>
+    </div>
+
+    <div id="page-categories" class="page">
+      <div class="page-title"><span>🏷️ Danh mục</span>
+        <div class="section-actions">
+          <button class="btn btn-indigo" onclick="showCatModal()"><i class="fas fa-plus"></i> Thêm</button>
+          <button id="cat-edit-btn" class="btn btn-outline" onclick="editSelected('cat')" disabled><i class="fas fa-pen"></i> Sửa</button>
+          <button id="cat-delete-btn" class="btn btn-danger" onclick="deleteSelected('cat')" disabled><i class="fas fa-trash"></i> Xóa</button>
+        </div>
+      </div>
+      <div class="filter-bar"><div class="filter-row"><div class="filter-field grow"><label>Tìm danh mục</label><input id="cat-q" oninput="renderCats()" placeholder="Tên danh mục..." /></div></div></div>
+      <div class="cat-grid" id="cat-list"></div>
+    </div>
+
+    <div id="page-settings" class="page">
+      <h2 class="page-title"><span>⚙️ Cài đặt & hồ sơ</span></h2>
+      <div class="settings-grid">
+        <section class="settings-card">
+          <h3>Thông tin cá nhân</h3>
+          <p>Cập nhật tên hiển thị trên tài khoản của bạn.</p>
+          <p>Email và vai trò do hệ thống quản lý, chỉ có thể xem.</p>
+          <form onsubmit="saveProfile(event)">
+            <div class="profile-avatar-wrap"><div class="user-avatar profile-avatar" id="profile-avatar">U</div><span class="hint">Ảnh đại diện từ đường dẫn URL</span></div>
+            <div class="form-group"><label>Ảnh đại diện</label><input id="profile-avatar-url" type="url" placeholder="https://..." /></div>
+            <div class="form-group"><label>Họ tên</label><input id="profile-name" required minlength="2" /></div>
+            <div class="form-group"><label>Email</label><input id="profile-email" disabled /></div>
+            <div class="form-group"><label>Vai trò</label><input id="profile-role" disabled /></div>
+            <button class="btn btn-indigo" type="submit"><i class="fas fa-check"></i> Lưu thông tin</button>
+          </form>
+        </section>
+        <section class="settings-card">
+          <h3>Giao diện</h3>
+          <p>Chọn chế độ hiển thị phù hợp với môi trường làm việc.</p>
+          <div class="theme-row"><span><strong>Dark mode</strong><br><small class="hint">Giữ nguyên hệ màu tài chính</small></span><label class="switch"><input id="theme-toggle" type="checkbox" onchange="toggleTheme(this.checked)" /><span></span></label></div>
+          <button class="btn btn-outline" type="button" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+        </section>
+        <section class="settings-card">
+          <h3>Đổi mật khẩu</h3>
+          <p>Chỉ mở biểu mẫu khi bạn cần thay đổi mật khẩu.</p>
+          <button id="change-password-toggle" class="btn btn-outline" type="button" onclick="togglePasswordForm()"><i class="fas fa-key"></i> Đổi mật khẩu</button>
+          <form id="change-password-form" class="hidden" onsubmit="changePassword(event)">
+            <p>Sử dụng ít nhất 8 ký tự, gồm chữ và số.</p>
+            <div class="form-group"><label>Mật khẩu hiện tại</label><input id="old-password" type="password" required /></div>
+            <div class="form-group"><label>Mật khẩu mới</label><input id="new-password" type="password" minlength="8" required /></div>
+            <div class="form-group"><label>Xác nhận mật khẩu mới</label><input id="confirm-new-password" type="password" minlength="8" required /></div>
+            <div class="modal-actions"><button class="btn btn-outline" type="button" onclick="togglePasswordForm(false)">Hủy</button><button class="btn btn-indigo" type="submit">Xác nhận đổi mật khẩu</button></div>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <div id="page-ai-report" class="page">
+      <h2 class="page-title">🤖 Báo cáo AI</h2>
+      <div class="report-layout">
+        <section class="card report-card report-create-card">
+          <div class="card-body">
+            <h3 class="card-title">Tạo báo cáo</h3>
+            <div class="row g-3 align-items-end">
+              <div class="col-sm-6"><label class="form-label" for="rp-month">Tháng</label><select class="form-select" id="rp-month"></select></div>
+              <div class="col-sm-6"><label class="form-label" for="rp-year">Năm</label><select class="form-select" id="rp-year"></select></div>
+              <div class="col-12"><button class="btn btn-purple" onclick="genReport()"><i class="fas fa-magic"></i> Sinh báo cáo</button></div>
+            </div>
+          </div>
+        </section>
+        <section class="card report-card report-history-card">
+          <div class="card-body"><h3 class="card-title">Lịch sử báo cáo</h3><div id="report-history-list" class="ai-history-list report-history-scroll"></div></div>
+        </section>
+        <section class="card report-card report-content-card">
+          <div class="card-body"><h3 class="card-title">Nội dung báo cáo</h3><div class="ai-result" id="report-out">Chọn tháng và sinh báo cáo.</div></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="page-ai-chat" class="page">
+      <h2 class="page-title"><span>💬 Chatbot AI</span></h2>
+      <div class="chat-shell">
+        <aside class="chat-history">
+          <button class="btn btn-indigo chat-new-btn" onclick="createChatConversation()"><i class="fas fa-plus"></i> Cuộc trò chuyện mới</button>
+          <div id="chat-history-list" class="chat-history-list"></div>
+        </aside>
+        <section class="chat-main">
+          <div class="chat-header"><div><strong id="chat-title">Cuộc trò chuyện mới</strong><small>Hội thoại riêng của bạn</small></div><button id="chat-delete-btn" class="btn btn-danger btn-sm" onclick="requestDeleteChat()" disabled><i class="fas fa-trash"></i></button></div>
+          <div id="chat-messages" class="chat-messages"><div class="chat-empty">Chọn một cuộc trò chuyện hoặc tạo cuộc trò chuyện mới.</div></div>
+          <div id="chat-image-preview" class="chat-image-preview hidden"></div><form class="chat-composer" onsubmit="sendChatMessage(event)"><input id="chat-image" type="file" accept="image/jpeg,image/png" hidden onchange="selectChatImage(event)" /><button class="chat-attach-btn" type="button" title="Đính kèm ảnh" aria-label="Đính kèm ảnh" onclick="document.getElementById('chat-image').click()"><i class="fas fa-paperclip"></i></button><input id="chat-q" autocomplete="off" placeholder="Nhập câu hỏi về chi tiêu của bạn..." onkeydown="if(event.key === 'Enter' && !event.shiftKey){event.preventDefault();sendChatMessage(event)}" /><button class="btn btn-indigo" type="submit" aria-label="Gửi tin nhắn"><i class="fas fa-paper-plane"></i></button></form>
+        </section>
+      </div>
+    </div>
+
+    <div id="page-ai-suggest" class="page">
+      <h2 class="page-title">💡 Gợi ý ngân sách</h2>
+      <div class="ai-panel">
+        <button class="btn btn-purple" onclick="suggestBudget()" style="margin-bottom:12px"><i class="fas fa-lightbulb"></i> Nhận gợi ý</button>
+        <div class="ai-history-panel"><h3>Lịch sử</h3><div id="suggest-history-list" class="ai-history-list"></div></div>
+        <div class="ai-result" id="suggest-out">Nhấn nút để AI phân tích lịch sử chi tiêu.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal TX -->
+<div class="modal-overlay" id="modal-tx">
+  <div class="modal">
+    <h3 id="tx-title">Thêm giao dịch</h3>
+    <form onsubmit="saveTx(event)">
+      <input type="hidden" id="tx-id" />
+      <div class="form-group"><label>Loại</label>
+        <select id="f-type" onchange="fillCats()"><option value="expense">Chi</option><option value="income">Thu</option></select>
+      </div>
+      <div class="form-group"><label>Số tiền</label><input type="number" id="f-amount" required min="1" /></div>
+      <div class="form-group"><label>Danh mục</label><select id="f-cat"></select></div>
+      <div class="form-group"><label>Ngày</label><input type="date" id="f-date" /></div>
+      <div class="form-group"><label>Ghi chú</label><input type="text" id="f-note" /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="hideModal('modal-tx')">Hủy</button>
+        <button type="submit" class="btn btn-indigo">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-budget">
+  <div class="modal">
+    <h3 id="budget-title">Thiết lập ngân sách</h3>
+    <form onsubmit="saveBudget(event)">
+      <input type="hidden" id="b-id" />
+      <div class="form-group"><label>Danh mục chi</label><select id="b-cat"></select></div>
+      <div class="form-group"><label>Tháng</label><select id="b-month"></select></div>
+      <div class="form-group"><label>Năm</label><select id="b-year"></select></div>
+      <div class="form-group"><label>Hạn mức</label><input type="number" id="b-limit" required min="1" /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="hideModal('modal-budget')">Hủy</button>
+        <button type="submit" class="btn btn-indigo">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-goal">
+  <div class="modal">
+    <h3 id="goal-title">Thêm mục tiêu</h3>
+    <form onsubmit="saveGoal(event)">
+      <input type="hidden" id="g-id" />
+      <div class="form-group"><label>Tên</label><input id="g-name" required /></div>
+      <div class="form-group"><label>Số tiền mục tiêu</label><input type="number" id="g-target" required min="1" /></div>
+      <div class="form-group"><label>Hiện có</label><input type="number" id="g-current" value="0" min="0" /></div>
+      <div class="form-group"><label>Hạn chót</label><input type="date" id="g-deadline" /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="hideModal('modal-goal')">Hủy</button>
+        <button type="submit" class="btn btn-indigo">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-cat">
+  <div class="modal">
+    <h3 id="cat-title">Thêm danh mục</h3>
+    <form onsubmit="saveCat(event)">
+      <input type="hidden" id="c-id" />
+      <div class="form-group"><label>Tên</label><input id="c-name" required /></div>
+      <div class="form-group"><label>Loại</label>
+        <select id="c-type"><option value="expense">Chi</option><option value="income">Thu</option></select>
+      </div>
+      <div class="form-group"><label>Icon</label><input id="c-icon" value="📁" /></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="hideModal('modal-cat')">Hủy</button>
+        <button type="submit" class="btn btn-indigo">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-tx-view">
+  <div class="modal"><h3>Chi tiết giao dịch</h3><div id="tx-view-content" class="detail-list"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="hideModal('modal-tx-view')">Đóng</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-logout" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+  <div class="modal modal-confirm">
+    <h3 id="logout-title">Xác nhận đăng xuất</h3>
+    <p>Bạn có chắc muốn đăng xuất không?</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" onclick="cancelLogout()">Hủy</button>
+      <button type="button" class="btn btn-danger" onclick="confirmLogout()">Đăng xuất</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-chat-delete" role="dialog" aria-modal="true" aria-labelledby="chat-delete-title">
+  <div class="modal modal-confirm">
+    <h3 id="chat-delete-title">Xóa cuộc trò chuyện?</h3>
+    <p>Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa.</p>
+    <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="cancelDeleteChat()">Hủy</button><button type="button" class="btn btn-danger" onclick="confirmDeleteChat()">Xóa cuộc trò chuyện</button></div>
+  </div>
+</div>
+
+<script>
+
+let categories = [];
+let chartCat = null, chartMonth = null;
+let txPage = 1;
+
+function nav(e, page) {
+  e.preventDefault();
+  document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (page === 'dashboard') loadDash();
+  if (page === 'transactions') { loadCatsData().then(() => loadTx(1)); }
+  if (page === 'budgets') { loadCatsData().then(loadBudgets); }
+  if (page === 'goals') loadGoals();
+  if (page === 'categories') loadCats();
+  if (page === 'settings') loadProfile();
+  if (page === 'ai-chat') loadChatConversations();
+  if (page === 'ai-report' || page === 'ai-suggest') loadAIHistory();
+}
+
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+const manageState = { tx: { rows: [], selectedId: 0 }, budget: { rows: [], selectedId: 0 }, goal: { rows: [], selectedId: 0 }, cat: { rows: [], selectedId: 0 } };
+function setManageOptions(type, rows) {
+  const state = manageState[type];
+  state.rows = rows;
+  if (!rows.some(row => row.id === state.selectedId)) state.selectedId = 0;
+  updateManageControls(type);
+}
+function updateManageControls(type) {
+  const selected = Boolean(manageState[type].selectedId);
+  document.getElementById(type + '-edit-btn')?.toggleAttribute('disabled', !selected);
+  document.getElementById(type + '-delete-btn')?.toggleAttribute('disabled', !selected);
+}
+function selectManageItem(type, id, element) {
+  manageState[type].selectedId = Number(id);
+  document.querySelectorAll(`[data-manage-type="${type}"]`).forEach(item => item.classList.remove('selected'));
+  if (element) element.classList.add('selected');
+  updateManageControls(type);
+}
+function selectedId(type) { return manageState[type].selectedId; }
+async function editSelected(type) {
+  const id = selectedId(type);
+  if (!id) { toast('Hãy chọn mục cần sửa', false); return; }
+  await ({ tx: editTx, budget: editBudget, goal: editGoal, cat: editCat }[type])(id);
+}
+async function deleteSelected(type) {
+  const id = selectedId(type);
+  if (!id) { toast('Hãy chọn mục cần xóa', false); return; }
+  await ({ tx: delTx, budget: delBudget, goal: delGoal, cat: delCat }[type])(id);
+}
+function applyTheme(dark) {
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  const toggle = document.getElementById('theme-toggle');
+  if (toggle) toggle.checked = dark;
+}
+function toggleTheme(dark) { localStorage.setItem('theme', dark ? 'dark' : 'light'); applyTheme(dark); }
+function togglePasswordForm(show = true) {
+  const form = document.getElementById('change-password-form');
+  const button = document.getElementById('change-password-toggle');
+  form.classList.toggle('hidden', !show);
+  button.classList.toggle('hidden', show);
+  if (!show) form.reset();
+}
+
+async function loadProfile() {
+  try {
+    const me = await api('/api/auth/me');
+    document.getElementById('profile-email').value = me.email || '';
+    document.getElementById('profile-name').value = me.full_name || '';
+    document.getElementById('profile-role').value = me.role === 'admin' ? 'Quản trị viên' : 'Người dùng';
+    document.getElementById('profile-avatar-url').value = me.avatar || '';
+    setAvatar(document.getElementById('profile-avatar'), me.avatar, me.full_name);
+  } catch (e) { toast(e.message, false); }
+}
+async function saveProfile(e) {
+  e.preventDefault();
+  try {
+    const name = document.getElementById('profile-name').value.trim();
+    const avatar = document.getElementById('profile-avatar-url').value.trim();
+    const result = await api('/api/auth/profile', { method: 'PUT', body: JSON.stringify({ full_name: name, avatar }) });
+    sessionStorage.setItem('full_name', result.full_name || name);
+    sessionStorage.setItem('avatar', result.avatar || '');
+    document.getElementById('user-label').innerHTML = `<strong style="font-size:12px;color:var(--text)">${escapeHtml(result.full_name || name)}</strong><br>${escapeHtml(sessionStorage.getItem('email') || '')}`;
+    setAvatar(document.getElementById('avatar'), result.avatar, result.full_name || name);
+    setAvatar(document.getElementById('profile-avatar'), result.avatar, result.full_name || name);
+    toast('Đã cập nhật thông tin');
+  } catch (err) { toast(err.message, false); }
+}
+async function changePassword(e) {
+  e.preventDefault();
+  const newPassword = document.getElementById('new-password').value;
+  if (newPassword !== document.getElementById('confirm-new-password').value) { toast('Xác nhận mật khẩu không khớp', false); return; }
+  try {
+    await api('/api/auth/change-password', { method: 'PUT', body: JSON.stringify({ old_password: document.getElementById('old-password').value, new_password: newPassword }) });
+    e.target.reset();
+    toast('Đã đổi mật khẩu');
+  } catch (err) { toast(err.message, false); }
+}
+function initSelects() {
+  const now = new Date();
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
+  ['rp-month', 'b-month', 'bf-month'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = months.map(m => `<option value="${m}" ${m === now.getMonth() + 1 ? 'selected' : ''}>Tháng ${m}</option>`).join('');
+  });
+  ['rp-year', 'b-year', 'bf-year'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = years.map(y => `<option value="${y}" ${y === now.getFullYear() ? 'selected' : ''}>${y}</option>`).join('');
+  });
+}
+
+async function loadCatsData() {
+  categories = await api('/api/categories');
+  const txFilter = document.getElementById('tx-category');
+  const budgetFilter = document.getElementById('bf-category');
+  const options = categories.map(c => `<option value="${c.id}">${escapeHtml(c.icon || '📁')} ${escapeHtml(c.name)}</option>`).join('');
+  if (txFilter) { const selected = txFilter.value; txFilter.innerHTML = '<option value="">Tất cả</option>' + options; txFilter.value = selected; }
+  if (budgetFilter) { const selected = budgetFilter.value; budgetFilter.innerHTML = '<option value="">Tất cả</option>' + categories.filter(c => c.type === 'expense').map(c => `<option value="${c.id}">${escapeHtml(c.icon || '📁')} ${escapeHtml(c.name)}</option>`).join(''); budgetFilter.value = selected; }
+}
+
+async function loadDash() {
+  try {
+    const s = await api('/api/stats/summary');
+    document.getElementById('sum-income').textContent = fmt(s.income);
+    document.getElementById('sum-expense').textContent = fmt(s.expense);
+    document.getElementById('sum-balance').textContent = fmt(s.balance);
+    document.getElementById('sum-rate').textContent = s.save_rate + '%';
+    const goals = s.goals || [];
+    document.getElementById('sum-goals-active').textContent = goals.filter(g => !g.is_completed).length;
+    document.getElementById('sum-goals-done').textContent = goals.filter(g => g.is_completed && !g.over_amount).length;
+    document.getElementById('sum-goals-over').textContent = goals.filter(g => g.over_amount > 0).length;
+    if (chartCat) chartCat.destroy();
+    chartCat = new Chart(document.getElementById('chart-cat'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(s.by_category), datasets: [{ data: Object.values(s.by_category), backgroundColor: ['#16a34a','#f97316','#2563eb','#c4b5fd','#86efac','#fdba74','#a78bfa'] }] },
+      options: { plugins: { legend: { position: 'bottom' } } }
+    });
+    if (chartMonth) chartMonth.destroy();
+    chartMonth = new Chart(document.getElementById('chart-month'), {
+      type: 'bar',
+      data: {
+        labels: s.by_month.map(m => 'T' + m.month),
+        datasets: [
+          { label: 'Thu nhập', data: s.by_month.map(m => m.income), backgroundColor: '#16a34a' },
+          { label: 'Chi tiêu', data: s.by_month.map(m => m.expense), backgroundColor: '#f97316' },
+          { label: 'Tiết kiệm', data: s.by_month.map(m => Math.max(0, m.income - m.expense)), backgroundColor: '#2563eb' }
+        ]
+      },
+      options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+  } catch (e) { toast(e.message, false); }
+}
+
+let notifications = [];
+function formatNotificationTime(value) {
+  if (!value) return '';
+  const normalized = value.replace('T', ' ').replace(/\..*$/, '');
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+  return match ? `${match[4]}:${match[5]}:${match[6]} ${match[3]}/${match[2]}/${match[1]}` : '';
+}
+async function loadNotifications(openPanel = false) {
+  try {
+    notifications = await api('/api/notifications');
+    const unread = notifications.filter(item => !item.is_read).length;
+    const count = document.getElementById('notification-count');
+    count.textContent = unread;
+    count.classList.toggle('hidden', unread === 0);
+    const dashboardCount = document.getElementById('sum-unread-notifications');
+    if (dashboardCount) dashboardCount.textContent = unread;
+    const list = document.getElementById('notification-list');
+    list.innerHTML = notifications.length ? notifications.map(item => `
+      <div class="notification-item ${item.is_read ? '' : 'unread'}">
+        <button type="button" class="notification-content" onclick="markNotificationRead(${item.id})">
+          <strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.message)}</span><small>${formatNotificationTime(item.created_at)}</small>
+        </button>
+        <button type="button" class="notification-delete" title="Xóa thông báo" onclick="deleteNotification(event, ${item.id})"><i class="fas fa-trash"></i></button>
+      </div>`).join('') : '<div class="notification-empty">Chưa có thông báo</div>';
+    if (openPanel && unread) toggleNotifications(true);
+  } catch (e) { toast(e.message, false); }
+}
+function toggleNotifications(force) {
+  const panel = document.getElementById('notification-panel');
+  const opening = force === true || (force === undefined && panel.classList.contains('hidden'));
+  panel.classList.toggle('hidden', !opening);
+  if (opening) {
+    const hasGoalNotification = notifications.some(item => !item.is_read && item.type === 'goal');
+    if (hasGoalNotification && typeof confetti === 'function') confetti({ particleCount: 140, spread: 75, origin: { y: 0.6 } });
+  }
+}
+async function markNotificationRead(id) {
+  try { await api('/api/notifications/' + id + '/read', { method: 'PUT' }); await loadNotifications(); }
+  catch (e) { toast(e.message, false); }
+}
+async function markAllNotificationsRead(reload = true) {
+  try { await api('/api/notifications/read-all', { method: 'PUT' }); notifications = notifications.map(item => ({ ...item, is_read: true })); document.querySelectorAll('.notification-item.unread').forEach(item => item.classList.remove('unread')); const count = document.getElementById('notification-count'); count.textContent = '0'; count.classList.add('hidden'); if (reload) await loadNotifications(); }
+  catch (e) { toast(e.message, false); }
+}
+async function deleteAllNotifications() {
+  try { await api('/api/notifications', { method: 'DELETE' }); await loadNotifications(); toast('Đã xóa tất cả thông báo'); }
+  catch (e) { toast(e.message, false); }
+}
+async function deleteNotification(event, id) {
+  event.stopPropagation();
+  try { await api('/api/notifications/' + id, { method: 'DELETE' }); await loadNotifications(); }
+  catch (e) { toast(e.message, false); }
+}
+
+async function loadTx(page) {
+  if (page) txPage = page;
+  let url = '/api/transactions?';
+  const q = document.getElementById('tx-q').value.trim();
+  const type = document.getElementById('tx-type').value;
+  const from = document.getElementById('tx-from').value;
+  const to = document.getElementById('tx-to').value;
+  const categoryId = document.getElementById('tx-category').value;
+  const [sort, order] = document.getElementById('tx-sort').value.split(':');
+  if (q) url += 'q=' + encodeURIComponent(q) + '&';
+  if (type) url += 'type=' + type + '&';
+  if (from) url += 'date_from=' + from + '&';
+  if (to) url += 'date_to=' + to + '&';
+  if (categoryId) url += 'category_id=' + categoryId + '&';
+  url += `sort=${sort}&order=${order}&page=${txPage}&limit=10`;
+  const body = document.getElementById('tx-body');
+  body.innerHTML = '<tr><td colspan="6" class="empty-state">Đang tải...</td></tr>';
+  try {
+    const data = await api(url);
+    const rows = data.items;
+    setManageOptions('tx', rows.map(t => ({ id: t.id, label: `${t.txn_date} · ${t.category_name || 'Không danh mục'} · ${fmt(t.amount)}` })));
+    body.innerHTML = rows.length ? rows.map(t => `
+      <tr class="manage-item ${manageState.tx.selectedId === t.id ? 'selected' : ''}" data-manage-type="tx" onclick="selectManageItem('tx', ${t.id}, this)">
+        <td>${escapeHtml(t.txn_date)}</td>
+        <td>${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '—')}</td>
+        <td><span class="badge ${t.type === 'income' ? 'badge-income' : 'badge-expense'}">${t.type === 'income' ? 'Thu' : 'Chi'}</span></td>
+        <td class="text-right ${t.type === 'income' ? 'text-green' : 'text-red'}">${fmt(t.amount)}</td>
+        <td>${escapeHtml(t.note || '')}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewTx(${t.id})">Xem</button></td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty-state">Chưa có giao dịch phù hợp</td></tr>';
+    document.getElementById('tx-pagination').innerHTML = data.total_pages > 1 ? `<button class="btn btn-outline btn-sm" ${data.page === 1 ? 'disabled' : ''} onclick="loadTx(${data.page - 1})">← Trước</button><span> Trang ${data.page}/${data.total_pages} · ${data.total} giao dịch </span><button class="btn btn-outline btn-sm" ${data.page === data.total_pages ? 'disabled' : ''} onclick="loadTx(${data.page + 1})">Sau →</button>` : (data.total ? `<span>${data.total} giao dịch</span>` : '');
+  } catch (e) { toast(e.message, false); }
+}
+
+function fillCats() {
+  const type = document.getElementById('f-type').value;
+  const cats = categories.filter(c => c.type === type);
+  document.getElementById('f-cat').innerHTML = cats.map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
+}
+
+async function showTxModal() {
+  await loadCatsData();
+  document.getElementById('tx-id').value = '';
+  document.getElementById('tx-title').textContent = 'Thêm giao dịch';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('f-type').value = 'expense';
+  fillCats();
+  showModal('modal-tx');
+}
+
+async function viewTx(id) {
+  try {
+    const t = await api('/api/transactions/' + id);
+    document.getElementById('tx-view-content').innerHTML = `<p><strong>Loại:</strong> ${t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</p><p><strong>Số tiền:</strong> ${fmt(t.amount)}</p><p><strong>Danh mục:</strong> ${escapeHtml(t.category_icon || '')} ${escapeHtml(t.category_name || '—')}</p><p><strong>Ngày:</strong> ${escapeHtml(t.txn_date)}</p><p><strong>Ghi chú:</strong> ${escapeHtml(t.note || '—')}</p>`;
+    showModal('modal-tx-view');
+  } catch (e) { toast(e.message, false); }
+}
+
+async function editTx(id) {
+  try {
+    const t = await api('/api/transactions/' + id);
+    await loadCatsData();
+    document.getElementById('tx-id').value = t.id;
+    document.getElementById('tx-title').textContent = 'Sửa giao dịch';
+    document.getElementById('f-type').value = t.type;
+    fillCats();
+    document.getElementById('f-cat').value = t.category_id || '';
+    document.getElementById('f-amount').value = t.amount;
+    document.getElementById('f-date').value = t.txn_date;
+    document.getElementById('f-note').value = t.note || '';
+    showModal('modal-tx');
+  } catch (e) { toast(e.message, false); }
+}
+
+async function saveTx(e) {
+  e.preventDefault();
+  const body = {
+    amount: parseFloat(document.getElementById('f-amount').value),
+    type: document.getElementById('f-type').value,
+    category_id: parseInt(document.getElementById('f-cat').value) || null,
+    txn_date: document.getElementById('f-date').value,
+    note: document.getElementById('f-note').value || ''
+  };
+  const id = document.getElementById('tx-id').value;
+  const submit = e.submitter;
+  if (submit) submit.disabled = true;
+  try {
+    const r = await api(id ? '/api/transactions/' + id : '/api/transactions', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+    hideModal('modal-tx');
+    toast(id ? 'Đã cập nhật giao dịch' : 'Đã thêm giao dịch');
+    if (r.alert) {
+      if (r.alert.level === 'exceeded') toast('Vượt ngân sách! Đã chi ' + fmt(r.alert.spent), false);
+      else if (r.alert.level === 'danger' && r.alert.percent_used >= 100) toast('Đã đạt 100% ngân sách', false);
+      else if (r.alert.level === 'danger') toast('Cảnh báo cao: đã dùng ' + r.alert.percent_used + '% ngân sách', false);
+      else toast('Cảnh báo: đã dùng ' + r.alert.percent_used + '% ngân sách', false);
+      await loadNotifications(true);
+    }
+    await Promise.all([loadTx(), loadDash(), loadBudgets()]);
+  } catch (err) { toast(err.message, false); } finally { if (submit) submit.disabled = false; }
+}
+
+async function delTx(id) {
+  if (!confirm('Xóa giao dịch?')) return;
+  try { await api('/api/transactions/' + id, { method: 'DELETE' }); await Promise.all([loadTx(), loadDash(), loadBudgets()]); toast('Đã xóa'); }
+  catch (e) { toast(e.message, false); }
+}
+
+async function loadBudgets() {
+  const month = document.getElementById('bf-month').value;
+  const year = document.getElementById('bf-year').value;
+  const category = document.getElementById('bf-category').value;
+  let url = '/api/budgets?';
+  if (month) url += 'month=' + month + '&';
+  if (year) url += 'year=' + year + '&';
+  if (category) url += 'category_id=' + category;
+  const list = document.getElementById('budget-list');
+  list.innerHTML = '<p class="empty-state">Đang tải...</p>';
+  try {
+    const rows = await api(url);
+    manageState.budget.allRows = rows;
+    setManageOptions('budget', rows.map(b => ({ id: b.id, label: `${b.category_name || 'Không danh mục'} · T${b.month}/${b.year}` })));
+    renderBudgets();
+  } catch (e) { toast(e.message, false); }
+}
+
+function renderBudgets() {
+  const rows = manageState.budget.allRows || [];
+  const query = (document.getElementById('budget-q')?.value || '').trim().toLowerCase();
+  const filtered = rows.filter(b => `${b.category_name || ''} ${b.month}/${b.year}`.toLowerCase().includes(query));
+  if (manageState.budget.selectedId && !filtered.some(b => b.id === manageState.budget.selectedId)) {
+    manageState.budget.selectedId = 0;
+    updateManageControls('budget');
+  }
+  const list = document.getElementById('budget-list');
+  list.innerHTML = filtered.length ? filtered.map(b => {
+      const pct = Math.min(100, Math.round(b.percent_used ?? b.percent));
+      const level = b.warning_level || b.alert_level;
+      const over = level === 'exceeded';
+      const alert = level === 'danger' ? (b.percent_used >= 100 ? 'Đạt 100%' : 'Cảnh báo cao') : level === 'warning' ? 'Đã dùng 80%+' : over ? 'Vượt ngân sách' : '';
+      const color = over || level === 'danger' ? 'red' : level === 'warning' ? 'yellow' : 'green';
+      const spent = b.spent_amount ?? b.spent;
+      const budget = b.budget_amount ?? b.limit_amount;
+      return `<div class="item-card manage-item ${over || level === 'danger' ? 'over-budget ' : ''}${manageState.budget.selectedId === b.id ? 'selected' : ''}" data-manage-type="budget" onclick="selectManageItem('budget', ${b.id}, this)">
+        <div style="font-weight:600">${escapeHtml(b.category_icon || '')} ${escapeHtml(b.category_name || '—')} · T${b.month}/${b.year}</div>
+        <div style="font-size:13px;color:#6b7280;margin:6px 0">${fmt(spent)} / ${fmt(budget)}</div>
+        <div class="progress-bar"><div class="progress-fill ${color}" style="width:${pct}%"></div></div>
+        <div style="font-size:12px;color:#6b7280">${b.percent_used ?? b.percent}%${alert ? ' · ' + alert : ''} · ${over ? 'Vượt ' + fmt(b.over_amount ?? (spent - budget)) : 'Còn ' + fmt(Math.max(0, budget - spent))}</div>
+      </div>`;
+    }).join('') : '<p class="empty-state">Chưa có ngân sách phù hợp</p>';
+}
+
+async function showBudgetModal() {
+  await loadCatsData();
+  const cats = categories.filter(c => c.type === 'expense');
+  document.getElementById('b-cat').innerHTML = cats.map(c => `<option value="${c.id}">${escapeHtml(c.icon || '📁')} ${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('b-limit').value = '';
+  document.getElementById('b-id').value = '';
+  document.getElementById('budget-title').textContent = 'Thiết lập ngân sách';
+  showModal('modal-budget');
+}
+
+async function editBudget(id) {
+  try {
+    const b = await api('/api/budgets/' + id);
+    await loadCatsData();
+    const cats = categories.filter(c => c.type === 'expense');
+    document.getElementById('b-cat').innerHTML = cats.map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
+    document.getElementById('b-id').value = b.id;
+    document.getElementById('budget-title').textContent = 'Sửa ngân sách';
+    document.getElementById('b-cat').value = b.category_id;
+    document.getElementById('b-month').value = b.month;
+    document.getElementById('b-year').value = b.year;
+    document.getElementById('b-limit').value = b.limit_amount;
+    showModal('modal-budget');
+  } catch (e) { toast(e.message, false); }
+}
+
+async function saveBudget(e) {
+  e.preventDefault();
+  const body = {
+    category_id: parseInt(document.getElementById('b-cat').value),
+    month: parseInt(document.getElementById('b-month').value),
+    year: parseInt(document.getElementById('b-year').value),
+    limit_amount: parseFloat(document.getElementById('b-limit').value)
+  };
+  const id = document.getElementById('b-id').value;
+  const submit = e.submitter; if (submit) submit.disabled = true;
+  try {
+    await api(id ? '/api/budgets/' + id : '/api/budgets', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+    hideModal('modal-budget'); await loadBudgets(); toast(id ? 'Đã cập nhật ngân sách' : 'Đã lưu ngân sách');
+  } catch (err) { toast(err.message, false); } finally { if (submit) submit.disabled = false; }
+}
+
+async function delBudget(id) {
+  if (!confirm('Xóa ngân sách?')) return;
+  try { await api('/api/budgets/' + id, { method: 'DELETE' }); await loadBudgets(); toast('Đã xóa'); }
+  catch (e) { toast(e.message, false); }
+}
+
+async function loadGoals() {
+  try {
+    const rows = await api('/api/goals');
+    manageState.goal.allRows = rows;
+    setManageOptions('goal', rows.map(g => ({ id: g.id, label: `${g.name} · ${g.percent}%` })));
+    renderGoals();
+  } catch (e) { toast(e.message, false); }
+}
+
+function renderGoals() {
+  const query = (document.getElementById('goal-q')?.value || '').trim().toLowerCase();
+  const rows = (manageState.goal.allRows || []).filter(g => g.name.toLowerCase().includes(query));
+  if (manageState.goal.selectedId && !rows.some(g => g.id === manageState.goal.selectedId)) {
+    manageState.goal.selectedId = 0;
+    updateManageControls('goal');
+  }
+  document.getElementById('goal-list').innerHTML = rows.length ? rows.map(g => `
+      <div class="item-card manage-item ${manageState.goal.selectedId === g.id ? 'selected' : ''}" data-manage-type="goal" onclick="selectManageItem('goal', ${g.id}, this)">
+        <div style="font-weight:600">${escapeHtml(g.name)}</div>
+        <div style="font-size:13px;color:#6b7280;margin:6px 0">${fmt(g.current_amount)} / ${fmt(g.target_amount)}</div>
+        <div class="progress-bar"><div class="progress-fill indigo" style="width:${Math.min(100, g.progress_percent ?? g.percent)}%"></div></div>
+        <div style="font-size:12px">${g.progress_percent ?? g.percent}% · ${g.status}${g.deadline ? ' · Hạn ' + escapeHtml(g.deadline) : ''} · ${g.over_amount > 0 ? 'Vượt mục tiêu ' + fmt(g.over_amount) : 'Còn ' + fmt(g.remaining_amount)}</div>
+        ${g.is_completed ? `<div class="goal-status-badge ${g.over_amount > 0 ? 'goal-badge-over' : 'goal-badge-done'}">${escapeHtml(g.message)}</div>` : ''}
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-green btn-sm" onclick="event.stopPropagation();addMoney(${g.id})"><i class="fas fa-plus"></i> Nạp tiền</button>
+          <button class="btn btn-purple btn-sm" onclick="event.stopPropagation();predictGoal(${g.id})">AI dự đoán</button>
+        </div>
+        <div id="pred-${g.id}" class="ai-result" style="display:none;margin-top:8px;min-height:0"></div>
+      </div>`).join('') : '<p class="empty-state">Chưa có mục tiêu phù hợp</p>';
+}
+
+function showGoalCongratulations(goal) {
+  const overlay = document.createElement('div');
+  overlay.className = 'goal-congratulation-overlay';
+  const over = Number(goal.over_amount || 0);
+  overlay.innerHTML = `<div class="goal-congratulation-modal"><div style="font-size:42px">${over > 0 ? '🏆' : '🎉'}</div><h3>${over > 0 ? 'Bạn đã vượt mục tiêu!' : 'Hoàn thành mục tiêu!'}</h3><p><strong>${escapeHtml(goal.name || 'Mục tiêu tiết kiệm')}</strong><br>${over > 0 ? 'Số tiền vượt: ' + fmt(over) : 'Đã đạt: ' + fmt(goal.current_amount)}</p><button type="button" class="btn btn-indigo" onclick="this.closest('.goal-congratulation-overlay').remove()">Đóng</button></div>`;
+  document.body.appendChild(overlay);
+  if (typeof confetti === 'function') confetti({ particleCount: 140, spread: 75, origin: { y: 0.6 } });
+}
+
+function showGoalModal() {
+  document.getElementById('g-id').value = '';
+  document.getElementById('goal-title').textContent = 'Thêm mục tiêu';
+  document.getElementById('g-name').value = '';
+  document.getElementById('g-target').value = '';
+  document.getElementById('g-current').value = '0';
+  document.getElementById('g-deadline').value = '';
+  showModal('modal-goal');
+}
+
+async function editGoal(id) {
+  try {
+    const g = await api('/api/goals/' + id);
+    document.getElementById('g-id').value = g.id;
+    document.getElementById('goal-title').textContent = 'Sửa mục tiêu';
+    document.getElementById('g-name').value = g.name;
+    document.getElementById('g-target').value = g.target_amount;
+    document.getElementById('g-current').value = g.current_amount;
+    document.getElementById('g-deadline').value = g.deadline || '';
+    showModal('modal-goal');
+  } catch (e) { toast(e.message, false); }
+}
+
+async function saveGoal(e) {
+  e.preventDefault();
+  const body = {
+    name: document.getElementById('g-name').value,
+    target_amount: parseFloat(document.getElementById('g-target').value),
+    current_amount: parseFloat(document.getElementById('g-current').value) || 0,
+    deadline: document.getElementById('g-deadline').value || null
+  };
+  const id = document.getElementById('g-id').value;
+  const submit = e.submitter; if (submit) submit.disabled = true;
+  try {
+    await api(id ? '/api/goals/' + id : '/api/goals', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+    hideModal('modal-goal'); await loadGoals(); toast(id ? 'Đã cập nhật mục tiêu' : 'Đã thêm mục tiêu');
+  } catch (err) { toast(err.message, false); } finally { if (submit) submit.disabled = false; }
+}
+
+async function addMoney(id) {
+  const amount = parseFloat(prompt('Số tiền cộng thêm:'));
+  if (!amount || amount <= 0) return;
+  try {
+    const result = await api('/api/goals/' + id + '/add-money', { method: 'POST', body: JSON.stringify({ amount }) });
+    toast('Đã cộng tiền');
+    await Promise.all([loadGoals(), loadNotifications(true)]);
+  } catch (e) { toast(e.message, false); }
+}
+
+async function predictGoal(id) {
+  const el = document.getElementById('pred-' + id);
+  el.style.display = 'block';
+  el.textContent = 'AI đang phân tích...';
+  try {
+    const r = await api('/api/ai/predict-goal/' + id, { method: 'POST', body: '{}' });
+    el.textContent = r.content;
+  } catch (e) { el.textContent = e.message; }
+}
+
+async function delGoal(id) {
+  if (!confirm('Xóa mục tiêu?')) return;
+  try { await api('/api/goals/' + id, { method: 'DELETE' }); await loadGoals(); toast('Đã xóa'); }
+  catch (e) { toast(e.message, false); }
+}
+
+async function loadCats() {
+  try {
+    await loadCatsData();
+    setManageOptions('cat', categories.map(c => ({ id: c.id, label: `${c.icon || '📁'} ${c.name}` })));
+    renderCats();
+  } catch (e) { toast(e.message, false); }
+}
+
+function renderCats() {
+    const query = (document.getElementById('cat-q')?.value || '').trim().toLowerCase();
+    const rows = categories.filter(c => `${c.name} ${c.type}`.toLowerCase().includes(query));
+    if (manageState.cat.selectedId && !rows.some(c => c.id === manageState.cat.selectedId)) {
+      manageState.cat.selectedId = 0;
+      updateManageControls('cat');
+    }
+    document.getElementById('cat-list').innerHTML = rows.length ? rows.map(c => `
+      <div class="cat-item manage-item ${manageState.cat.selectedId === c.id ? 'selected' : ''}" data-manage-type="cat" onclick="selectManageItem('cat', ${c.id}, this)">
+        <span class="icon">${escapeHtml(c.icon || '📁')}</span>
+        <div style="flex:1"><div style="font-weight:600">${escapeHtml(c.name)}</div><div style="font-size:12px;color:#9ca3af">${c.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</div></div>
+      </div>`).join('') : '<p class="empty-state">Chưa có danh mục phù hợp</p>';
+}
+
+function showCatModal() {
+  document.getElementById('c-id').value = '';
+  document.getElementById('cat-title').textContent = 'Thêm danh mục';
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-type').value = 'expense';
+  document.getElementById('c-icon').value = '📁';
+  showModal('modal-cat');
+}
+
+async function editCat(id) {
+  const category = categories.find(c => c.id === id);
+  if (!category) { toast('Không tìm thấy danh mục', false); return; }
+  document.getElementById('c-id').value = category.id;
+  document.getElementById('cat-title').textContent = 'Sửa danh mục';
+  document.getElementById('c-name').value = category.name;
+  document.getElementById('c-type').value = category.type;
+  document.getElementById('c-icon').value = category.icon || '📁';
+  showModal('modal-cat');
+}
+
+async function saveCat(e) {
+  e.preventDefault();
+  const body = {
+    name: document.getElementById('c-name').value,
+    type: document.getElementById('c-type').value,
+    icon: document.getElementById('c-icon').value || '📁'
+  };
+  const id = document.getElementById('c-id').value;
+  const submit = e.submitter; if (submit) submit.disabled = true;
+  try {
+    await api(id ? '/api/categories/' + id : '/api/categories', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+    hideModal('modal-cat'); await loadCats(); toast(id ? 'Đã cập nhật danh mục' : 'Đã thêm danh mục');
+  } catch (err) { toast(err.message, false); } finally { if (submit) submit.disabled = false; }
+}
+
+async function delCat(id) {
+  if (!confirm('Xóa danh mục?')) return;
+  try { await api('/api/categories/' + id, { method: 'DELETE' }); await loadCats(); toast('Đã xóa'); }
+  catch (e) { toast(e.message, false); }
+}
+
+async function genReport() {
+  const month = parseInt(document.getElementById('rp-month').value);
+  const year = parseInt(document.getElementById('rp-year').value);
+  document.getElementById('report-out').textContent = '🤖 AI đang phân tích...';
+  try {
+    const r = await api('/api/ai/report', { method: 'POST', body: JSON.stringify({ month, year }) });
+    document.getElementById('report-out').textContent = r.content;
+    await loadAIHistory();
+  } catch (e) { document.getElementById('report-out').textContent = e.message; }
+}
+
+let chatConversations = [];
+let activeChatId = 0;
+let chatSending = false;
+let chatDraftActive = false;
+let attachedChatImage = null;
+
+function renderChatHistory() {
+  const list = document.getElementById('chat-history-list');
+  list.innerHTML = chatConversations.length ? chatConversations.map(chat => `
+    <button class="chat-history-item ${chat.id === activeChatId ? 'active' : ''}" onclick="openChatConversation(${chat.id})">
+      <strong>${escapeHtml(chat.title)}</strong><small>${chat.message_count} tin nhắn</small>
+    </button>`).join('') : '<div class="chat-empty small">Chưa có cuộc trò chuyện</div>';
+}
+async function loadChatConversations(selectLatest = true) {
+  try {
+    chatConversations = await api('/api/chat/conversations');
+    renderChatHistory();
+    if (selectLatest && chatConversations.length) await openChatConversation(chatConversations[0].id);
+    else if (!chatConversations.length) { resetChatView(); chatDraftActive = true; }
+  } catch (e) { toast(e.message, false); }
+}
+function resetChatView() {
+  activeChatId = 0;
+  chatDraftActive = false;
+  document.getElementById('chat-title').textContent = 'Cuộc trò chuyện mới';
+  document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">Tạo cuộc trò chuyện mới để bắt đầu.</div>';
+  document.getElementById('chat-delete-btn').disabled = true;
+  renderChatHistory();
+}
+async function createChatConversation() {
+  activeChatId = 0;
+  chatDraftActive = true;
+  document.getElementById('chat-title').textContent = 'Cuộc trò chuyện mới';
+  document.getElementById('chat-delete-btn').disabled = true;
+  document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">Hãy gửi câu hỏi đầu tiên.</div>';
+  renderChatHistory();
+  document.getElementById('chat-q').focus();
+}
+async function openChatConversation(id) {
+  try {
+    const chat = chatConversations.find(item => item.id === id);
+    if (!chat) return;
+    activeChatId = id;
+    chatDraftActive = false;
+    document.getElementById('chat-title').textContent = chat.title;
+    document.getElementById('chat-delete-btn').disabled = false;
+    renderChatHistory();
+    const messages = await api('/api/chat/conversations/' + id + '/messages');
+    renderChatMessages(messages);
+  } catch (e) { toast(e.message, false); }
+}
+function renderChatMessages(messages) {
+  const output = document.getElementById('chat-messages');
+  output.innerHTML = messages.length ? messages.map(message => `<div class="chat-message ${message.role === 'user' ? 'user' : 'assistant'}"><div class="chat-avatar">${message.role === 'user' ? 'U' : 'AI'}</div><div><small class="chat-author">${message.role === 'user' ? 'Bạn' : 'Trợ lý AI'}</small><div class="chat-bubble">${escapeHtml(message.content).replace(/\n/g, '<br>')}</div>${message.role === 'assistant' ? chatMessageActions(message.id, message.content) : ''}</div></div>`).join('') : '<div class="chat-empty">Hãy gửi câu hỏi đầu tiên.</div>';
+  requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; });
+}
+function chatMessageActions(messageId, content) {
+  return `<div class="chat-actions"><button class="chat-action-btn" type="button" title="Sao chép phản hồi" aria-label="Sao chép phản hồi" onclick="copyChatMessage(${messageId})"><i class="fas fa-copy"></i></button><button class="chat-action-btn" type="button" title="Đánh dấu hữu ích" aria-label="Đánh dấu hữu ích" onclick="feedbackChatMessage(${messageId}, 'helpful')"><i class="fas fa-thumbs-up"></i></button><button class="chat-action-btn" type="button" title="Đánh dấu không hữu ích" aria-label="Đánh dấu không hữu ích" onclick="feedbackChatMessage(${messageId}, 'not_helpful')"><i class="fas fa-thumbs-down"></i></button><button class="chat-action-btn" type="button" title="Tải xuống tệp TXT" aria-label="Tải xuống tệp TXT" onclick="downloadChatMessage(${messageId}, 'txt')"><i class="fas fa-file-lines"></i></button><button class="chat-action-btn" type="button" title="Tải xuống tệp PDF" aria-label="Tải xuống tệp PDF" onclick="downloadChatMessage(${messageId}, 'pdf')"><i class="fas fa-file-pdf"></i></button></div>`;
+}
+function selectChatImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!['image/jpeg', 'image/png'].includes(file.type)) { toast('Chỉ hỗ trợ ảnh JPG, JPEG hoặc PNG.', false); event.target.value = ''; return; }
+  attachedChatImage = file;
+  const preview = document.getElementById('chat-image-preview');
+  preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Ảnh đính kèm"><button type="button" onclick="clearChatImage()" aria-label="Bỏ ảnh"><i class="fas fa-times"></i></button>`;
+  preview.classList.remove('hidden');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const messages = document.getElementById('chat-messages');
+  if (!messages) return;
+  messages.addEventListener('paste', event => {
+    const file = [...(event.clipboardData?.files || [])].find(item => ['image/jpeg', 'image/png'].includes(item.type));
+    if (file) { event.preventDefault(); attachedChatImage = file; selectChatImage({ target: { files: [file], value: '' } }); }
+  });
+  messages.addEventListener('dragover', event => { event.preventDefault(); messages.classList.add('drag-over'); });
+  messages.addEventListener('dragleave', () => messages.classList.remove('drag-over'));
+  messages.addEventListener('drop', event => { event.preventDefault(); messages.classList.remove('drag-over'); const file = [...event.dataTransfer.files].find(item => ['image/jpeg', 'image/png'].includes(item.type)); if (file) { attachedChatImage = file; selectChatImage({ target: { files: [file], value: '' } }); } });
+});
+function clearChatImage() { attachedChatImage = null; document.getElementById('chat-image').value = ''; document.getElementById('chat-image-preview').classList.add('hidden'); }
+async function copyChatMessage(messageId) {
+  const message = await api('/api/chat/conversations/' + activeChatId + '/messages');
+  const item = message.find(row => row.id === messageId);
+  if (item) { await navigator.clipboard.writeText(item.content); toast('Đã sao chép'); }
+}
+async function feedbackChatMessage(messageId, feedbackType) {
+  try { await api('/api/chat/messages/' + messageId + '/feedback', { method: 'POST', body: JSON.stringify({ feedback_type: feedbackType }) }); document.querySelectorAll(`[data-feedback-message="${messageId}"]`).forEach(button => button.classList.toggle('selected', button.dataset.feedback === feedbackType)); toast(feedbackType === 'helpful' ? 'Cảm ơn đánh giá của bạn' : 'Đã ghi nhận phản hồi'); }
+  catch (e) { toast('Không thể lưu đánh giá', false); }
+}
+async function downloadChatMessage(messageId, format) {
+  try {
+    const response = await fetch('/api/chat/messages/' + messageId + '/download?format=' + format, { headers: { Authorization: 'Bearer ' + token() } });
+    if (!response.ok) throw new Error('Không thể tải phản hồi');
+    const blob = await response.blob();
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'phan-hoi-ai-' + messageId + '.' + format; link.click(); URL.revokeObjectURL(link.href);
+  } catch (e) { toast(e.message, false); }
+}
+async function sendChatMessage(e) {
+  e.preventDefault();
+  const input = document.getElementById('chat-q');
+  const content = input.value.trim();
+  if ((!content && !attachedChatImage) || chatSending) return;
+  if (!activeChatId && !chatDraftActive) return;
+  chatSending = true;
+  input.value = '';
+  input.disabled = true;
+  const output = document.getElementById('chat-messages');
+  output.insertAdjacentHTML('beforeend', `<div class="chat-message user"><div class="chat-avatar">U</div><div><small class="chat-author">Bạn</small><div class="chat-bubble">${escapeHtml(content).replace(/\n/g, '<br>')}</div></div></div><div class="chat-message assistant pending"><div class="chat-avatar">AI</div><div><small class="chat-author">Trợ lý AI</small><div class="chat-bubble"><span class="chat-status"><i class="fas fa-circle-notch fa-spin"></i> AI đang suy nghĩ...</span></div></div></div>`);
+  requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; });
+  try {
+    const conversationId = activeChatId || 0;
+    let result;
+    if (attachedChatImage) {
+      const formData = new FormData(); formData.append('file', attachedChatImage); formData.append('content', content);
+      const response = await fetch('/api/chat/conversations/' + conversationId + '/messages/with-image', { method: 'POST', headers: { Authorization: 'Bearer ' + token() }, body: formData });
+      result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result.detail || 'Không thể xử lý ảnh');
+    } else {
+      result = await api('/api/chat/conversations/' + conversationId + '/messages', { method: 'POST', body: JSON.stringify({ content }) });
+    }
+    if (!activeChatId) {
+      activeChatId = result.conversation_id;
+      chatDraftActive = false;
+      chatConversations.unshift({ id: result.conversation_id, title: result.title, message_count: 0 });
+      document.getElementById('chat-title').textContent = result.title;
+      document.getElementById('chat-delete-btn').disabled = false;
+      renderChatHistory();
+    }
+    const pending = output.querySelector('.pending');
+    if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-avatar">AI</div><div><small class="chat-author">${result.source === 'AI' ? '🤖 AI' : '📊 Dữ liệu nội bộ'}</small><div class="chat-bubble">${escapeHtml(result.assistant_message.content).replace(/\n/g, '<br>')}</div>${chatMessageActions(result.assistant_message.id, result.assistant_message.content)}</div></div>`;
+    clearChatImage();
+    const chat = chatConversations.find(item => item.id === activeChatId);
+    if (chat) { chat.title = result.title || chat.title; chat.message_count += 2; document.getElementById('chat-title').textContent = chat.title; }
+    renderChatHistory();
+  } catch (err) {
+    const pending = output.querySelector('.pending');
+    const message = chatErrorMessage(err);
+    if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-bubble error">${escapeHtml(message)}${message.includes('quá dài') ? ' <button type="button" class="chat-new-inline" onclick="createChatConversation()">Cuộc trò chuyện mới</button>' : ''}</div></div>`;
+  } finally { chatSending = false; input.disabled = false; input.focus(); requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; }); }
+}
+function requestDeleteChat() { if (activeChatId) document.getElementById('modal-chat-delete').classList.add('show'); }
+function cancelDeleteChat() { document.getElementById('modal-chat-delete').classList.remove('show'); }
+async function confirmDeleteChat() {
+  if (!activeChatId) return;
+  try {
+    await api('/api/chat/conversations/' + activeChatId, { method: 'DELETE' });
+    chatConversations = chatConversations.filter(chat => chat.id !== activeChatId);
+    cancelDeleteChat();
+    activeChatId = chatConversations[0]?.id || 0;
+    if (activeChatId) await openChatConversation(activeChatId); else resetChatView();
+  } catch (e) { toast(e.message, false); }
+}
+
+async function suggestBudget() {
+  document.getElementById('suggest-out').textContent = '🤖 Đang phân tích...';
+  try {
+    const r = await api('/api/ai/suggest-budget', { method: 'POST', body: '{}' });
+    document.getElementById('suggest-out').textContent = r.content;
+    await loadAIHistory();
+  } catch (e) { document.getElementById('suggest-out').textContent = e.message; }
+}
+
+let savedAI = [];
+async function loadAIHistory() {
+  try {
+    savedAI = await api('/api/ai/generations');
+    renderAIHistoryList('report-history-list', 'report');
+    renderAIHistoryList('suggest-history-list', 'suggest');
+  } catch (e) { toast(e.message, false); }
+}
+function renderAIHistoryList(elementId, kind) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  const items = savedAI.filter(item => item.kind === kind);
+  element.innerHTML = items.length ? items.map(item => `<div class="ai-history-row"><button class="ai-history-item" onclick="showSavedAI(${item.id})"><strong>${escapeHtml(item.title)}</strong><small>${item.kind === 'report' && item.period_start ? `${item.period_start} - ${item.period_end} · ` : ''}${item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : ''}</small></button><button class="ai-history-delete" type="button" title="Xóa lịch sử" aria-label="Xóa lịch sử" onclick="deleteSavedAI(event, ${item.id})"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="ai-history-empty">Chưa có lịch sử</div>';
+}
+async function deleteSavedAI(event, id) {
+  event.stopPropagation();
+  if (!confirm('Xóa bản ghi lịch sử AI này?')) return;
+  try {
+    await api('/api/ai/generations/' + id, { method: 'DELETE' });
+    savedAI = savedAI.filter(item => item.id !== id);
+    renderAIHistoryList('report-history-list', 'report');
+    renderAIHistoryList('suggest-history-list', 'suggest');
+  } catch (e) { toast(e.message, false); }
+}
+function showSavedAI(id) {
+  const saved = savedAI.find(item => String(item.id) === String(id));
+  if (!saved) return;
+  document.getElementById(saved.kind === 'report' ? 'report-out' : 'suggest-out').textContent = saved.content;
+}
+
+async function initUserApp() {
+  if (!await requireAuth('user')) return;
+  document.getElementById('user-label').innerHTML =
+    `<strong style="font-size:12px;color:#374151">${sessionStorage.getItem('full_name') || ''}</strong><br>${sessionStorage.getItem('email') || ''}`;
+  document.getElementById('avatar').textContent = (sessionStorage.getItem('full_name') || 'U').charAt(0).toUpperCase();
+  initSelects();
+    applyTheme(localStorage.getItem('theme') === 'dark');
+  setAvatar(document.getElementById('avatar'), sessionStorage.getItem('avatar'), sessionStorage.getItem('full_name'));
+  await loadCatsData();
+  await Promise.all([loadDash(), loadNotifications()]);
+}
+
+initUserApp();
+</script>
+</body>
+</html>
