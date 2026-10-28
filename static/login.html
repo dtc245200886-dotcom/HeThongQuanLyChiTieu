@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập - Chi tiêu AI</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+<div id="auth-screen" style="display:flex">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="emoji">💰</div>
+      <h1>Quản lý Chi tiêu AI</h1>
+      <p>Hệ thống hỗ trợ quản lý tài chính cá nhân</p>
+    </div>
+    <div class="auth-tabs">
+      <button id="tab-login" class="active" type="button" onclick="switchTab('login')">Đăng nhập</button>
+      <button id="tab-register" type="button" onclick="switchTab('register')">Đăng ký</button>
+    </div>
+    <form id="auth-form" novalidate onsubmit="handleAuth(event)">
+      <div class="form-group hidden" id="fullname-field">
+        <label>Họ tên</label>
+        <input type="text" id="full_name" placeholder="Nguyễn Văn A" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+          <input type="text" id="email" required placeholder="email@example.com" autocomplete="username" inputmode="email" />
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <div class="password-wrap">
+          <input type="password" id="password" required minlength="6" placeholder="••••••" autocomplete="current-password" />
+          <button type="button" class="password-toggle" onclick="togglePw()">
+            <i class="fas fa-eye" id="icon-pw"></i><span id="pw-label">Hiện</span>
+          </button>
+        </div>
+      </div>
+      <div class="form-group hidden" id="confirm-password-field">
+        <label>Xác nhận mật khẩu</label>
+        <div class="password-wrap"><input type="password" id="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" /><button type="button" class="password-toggle" onclick="toggleConfirmPw()"><i class="fas fa-eye" id="icon-confirm-pw"></i><span id="confirm-pw-label">Hiện</span></button></div>
+      </div>
+      <button type="submit" class="btn-primary" id="auth-btn">Đăng nhập</button>
+      <button type="button" id="forgot-password-btn" class="auth-link" onclick="showForgotPassword()">Quên mật khẩu?</button>
+      <p id="auth-error" class="auth-error"></p>
+      <p id="auth-success" class="auth-success"></p>
+    </form>
+    <form id="password-reset-form" class="hidden" onsubmit="submitPasswordReset(event)">
+      <h2>Đặt lại mật khẩu</h2>
+      <p>Liên kết có hiệu lực trong 15 phút.</p>
+      <input id="reset-token" type="hidden" />
+      <div class="form-group">
+        <label>Mật khẩu mới</label>
+        <input id="reset-new-password" type="password" minlength="8" maxlength="128" required autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label>Xác nhận mật khẩu mới</label>
+        <input id="reset-confirm-password" type="password" minlength="8" maxlength="128" required autocomplete="new-password" />
+      </div>
+      <button type="submit" class="btn-primary" id="reset-password-submit">Lưu mật khẩu mới</button>
+      <button type="button" class="auth-link" onclick="cancelPasswordReset()">Quay lại đăng nhập</button>
+      <p id="reset-error" class="auth-error"></p>
+    </form>
+    <p class="hint" style="text-align:center;margin-top:14px;color:#9ca3af">
+      Tài khoản quản trị do hệ thống cấp — không đăng ký công khai.
+    </p>
+  </div>
+</div>
+<script src="/static/app.js"></script>
+<script>
+let mode = 'login';
+
+async function showForgotPassword() {
+  const email = document.getElementById('email').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showErr('Vui lòng nhập email hợp lệ trước khi đặt lại mật khẩu.');
+    return;
+  }
+  try {
+    const response = await fetch(API + '/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || 'Không thể gửi email đặt lại mật khẩu.');
+    const success = document.getElementById('auth-success');
+    success.textContent = data.message;
+    success.classList.add('show');
+  } catch (error) {
+    showErr(error.message || 'Không kết nối được server.');
+  }
+}
+
+async function submitPasswordReset(event) {
+  event.preventDefault();
+  const password = document.getElementById('reset-new-password').value;
+  const errorElement = document.getElementById('reset-error');
+  errorElement.classList.remove('show');
+  if (password.length < 8 || !/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) {
+    errorElement.textContent = 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ và số.';
+    errorElement.classList.add('show');
+    return;
+  }
+  if (new TextEncoder().encode(password).length > 72) {
+    errorElement.textContent = 'Mật khẩu không được vượt quá 72 byte UTF-8.';
+    errorElement.classList.add('show');
+    return;
+  }
+  if (password !== document.getElementById('reset-confirm-password').value) {
+    errorElement.textContent = 'Xác nhận mật khẩu không khớp.';
+    errorElement.classList.add('show');
+    return;
+  }
+  const submit = document.getElementById('reset-password-submit');
+  submit.disabled = true;
+  try {
+    const response = await fetch(API + '/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: document.getElementById('reset-token').value,
+        new_password: password
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || 'Không thể đặt lại mật khẩu.');
+    cancelPasswordReset();
+    switchTab('login');
+    const success = document.getElementById('auth-success');
+    success.textContent = data.message;
+    success.classList.add('show');
+  } catch (error) {
+    errorElement.textContent = error.message || 'Không kết nối được server.';
+    errorElement.classList.add('show');
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+function cancelPasswordReset() {
+  document.getElementById('password-reset-form').classList.add('hidden');
+  document.getElementById('auth-form').classList.remove('hidden');
+  document.getElementById('password-reset-form').reset();
+  history.replaceState(null, '', location.pathname);
+}
+
+function initializePasswordReset() {
+  const resetToken = new URLSearchParams(location.hash.slice(1)).get('reset_token');
+  if (!resetToken) return false;
+  document.getElementById('reset-token').value = resetToken;
+  document.getElementById('auth-form').classList.add('hidden');
+  document.getElementById('password-reset-form').classList.remove('hidden');
+  history.replaceState(null, '', location.pathname);
+  return true;
+}
+
+function switchTab(m) {
+  mode = m;
+  document.getElementById('tab-login').classList.toggle('active', m === 'login');
+  document.getElementById('tab-register').classList.toggle('active', m === 'register');
+  document.getElementById('fullname-field').classList.toggle('hidden', m !== 'register');
+  document.getElementById('confirm-password-field').classList.toggle('hidden', m !== 'register');
+  document.getElementById('auth-btn').textContent = m === 'login' ? 'Đăng nhập' : 'Đăng ký';
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+  document.getElementById('password').value = '';
+  document.getElementById('confirm_password').value = '';
+  document.getElementById('password').setAttribute('autocomplete', m === 'login' ? 'current-password' : 'new-password');
+}
+
+function togglePw() {
+  const i = document.getElementById('password');
+  const icon = document.getElementById('icon-pw');
+  const lab = document.getElementById('pw-label');
+  if (i.type === 'password') { i.type = 'text'; icon.className = 'fas fa-eye-slash'; lab.textContent = 'Ẩn'; }
+  else { i.type = 'password'; icon.className = 'fas fa-eye'; lab.textContent = 'Hiện'; }
+}
+function toggleConfirmPw() {
+  const input = document.getElementById('confirm_password');
+  const icon = document.getElementById('icon-confirm-pw');
+  const label = document.getElementById('confirm-pw-label');
+  const visible = input.type === 'password';
+  input.type = visible ? 'text' : 'password';
+  icon.className = visible ? 'fas fa-eye-slash' : 'fas fa-eye';
+  label.textContent = visible ? 'Ẩn' : 'Hiện';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  const full_name = document.getElementById('full_name').value.trim();
+  const confirmPassword = document.getElementById('confirm_password').value;
+  const submitButton = document.getElementById('auth-btn');
+
+  try {
+    let data;
+    if (!email) { showErr('Vui lòng nhập email.'); return; }
+    if (!email.includes('@')) { showErr('Email phải chứa ký tự @.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Email không đúng định dạng.'); return; }
+    if (!password) { showErr('Vui lòng nhập mật khẩu.'); return; }
+    if (password.length < 6) { showErr('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
+    if (mode === 'register') {
+      if (full_name.length < 2) { showErr('Họ tên phải có ít nhất 2 ký tự'); return; }
+      if (password.length < 6) { showErr('Mật khẩu phải có ít nhất 6 ký tự'); return; }
+      if (!/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) { showErr('Mật khẩu phải gồm cả chữ và số'); return; }
+      if (!confirmPassword) { showErr('Vui lòng nhập mật khẩu xác nhận.'); return; }
+      if (password !== confirmPassword) { showErr('Xác nhận mật khẩu không khớp'); return; }
+      submitButton.disabled = true;
+      submitButton.textContent = 'Đang tạo tài khoản...';
+      const res = await fetch(API + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name })
+      });
+      data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const d = data.detail;
+        throw new Error(typeof d === 'string' ? d : (Array.isArray(d) ? d.map(x => x.msg).join(', ') : 'Đăng ký thất bại'));
+      }
+      switchTab('login');
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = '';
+      const success = document.getElementById('auth-success');
+      success.textContent = 'Đăng ký thành công. Vui lòng đăng nhập.';
+      success.classList.add('show');
+      return;
+    }
+
+    const form = new URLSearchParams();
+    form.append('username', email);
+    form.append('password', password);
+    const res = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form
+    });
+    data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const d = data.detail;
+      throw new Error(typeof d === 'string' ? d : 'Email hoặc mật khẩu không chính xác');
+    }
+
+    saveSession(data);
+
+    if (data.role === 'admin') location.href = '/admin';
+    else location.href = '/';
+  } catch (ex) {
+    if (ex.message === 'Failed to fetch' || ex.name === 'TypeError') {
+      showErr('Không kết nối được server. Chạy: uvicorn main:app --reload --port 8000');
+    } else {
+      showErr(ex.message || 'Lỗi đăng nhập');
+    }
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = mode === 'login' ? 'Đăng nhập' : 'Đăng ký';
+  }
+}
+
+(async function () {
+  if (initializePasswordReset()) return;
+  const t = sessionStorage.getItem('token');
+  if (!t) return;
+  try {
+    const res = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + t } });
+    if (!res.ok) { clearSession(); return; }
+    const me = await res.json();
+    sessionStorage.setItem('role', me.role);
+    sessionStorage.setItem('full_name', me.full_name || '');
+    sessionStorage.setItem('email', me.email || '');
+    if (me.role === 'admin') location.href = '/admin';
+    else location.href = '/';
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>
