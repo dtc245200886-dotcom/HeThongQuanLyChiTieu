@@ -1310,3 +1310,276 @@ body[data-theme="dark"] #app td {
     transition: none;
   }
 }
+
+.goal-topup-overlay {
+  z-index: 1100;
+  background: rgba(15, 29, 27, .52);
+  backdrop-filter: blur(5px);
+}
+
+.goal-topup-modal {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: min(90vh, 720px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 30px;
+  border: 1px solid var(--dash-line);
+  border-radius: 22px;
+  background: var(--dash-surface);
+  color: var(--dash-ink);
+  box-shadow: 0 24px 80px rgba(13, 35, 31, .24);
+  animation: goal-topup-enter .2s ease-out;
+}
+
+@keyframes goal-topup-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.goal-topup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: var(--dash-surface-muted);
+  color: var(--dash-muted);
+  cursor: pointer;
+}
+
+.goal-topup-close:hover {
+  background: var(--dash-line);
+  color: var(--dash-ink);
+}
+
+.goal-topup-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 28px;
+}
+
+.goal-topup-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(18, 130, 116, .1);
+  color: var(--dash-accent);
+  font-size: 21px;
+}
+
+.goal-topup-heading h2 {
+  margin: 0;
+  color: var(--dash-ink);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.goal-topup-heading p {
+  margin: 3px 0 0;
+  color: var(--dash-muted);
+  font-size: 13px;
+}
+
+.goal-topup-summary {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--dash-line);
+  border-radius: 15px;
+  background: var(--dash-surface-muted);
+}
+
+.goal-topup-summary-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
+  color: var(--dash-accent-dark);
+  font-weight: 750;
+}
+
+.goal-topup-summary-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-topup-progress {
+  height: 8px;
+  margin: 14px 0 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--dash-line);
+}
+
+.goal-topup-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #13aa8e, #128274);
+  transition: width .25s ease;
+}
+
+.goal-topup-totals {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--dash-muted);
+  font-size: 12px;
+}
+
+.goal-topup-totals strong {
+  color: var(--dash-ink);
+  font-weight: 700;
+}
+
+.goal-topup-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--dash-ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.goal-topup-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border: 1px solid var(--dash-line);
+  border-radius: 13px;
+  background: var(--dash-surface);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.goal-topup-input-wrap:focus-within {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px rgba(18, 130, 116, .13);
+}
+
+.goal-topup-input-wrap input {
+  width: 100%;
+  min-width: 0;
+  height: 54px;
+  padding: 0;
+  border: 0 !important;
+  outline: 0;
+  background: transparent;
+  color: var(--dash-ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 750;
+  box-shadow: none !important;
+}
+
+.goal-topup-input-wrap input::placeholder {
+  color: #a3afad;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.goal-topup-input-wrap > span {
+  flex: 0 0 auto;
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.goal-topup-hint {
+  margin: 7px 0 0;
+  color: var(--dash-muted);
+  font-size: 12px;
+}
+
+.goal-topup-error {
+  min-height: 0;
+  margin-top: 5px;
+  color: #d94343;
+  font-size: 12px;
+}
+
+.goal-topup-error:empty {
+  display: none;
+}
+
+.goal-topup-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.goal-topup-shortcuts button {
+  padding: 7px 11px;
+  border: 1px solid rgba(18, 130, 116, .2);
+  border-radius: 999px;
+  background: rgba(18, 130, 116, .06);
+  color: var(--dash-accent-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.goal-topup-shortcuts button:hover {
+  border-color: var(--dash-accent);
+  background: rgba(18, 130, 116, .12);
+}
+
+.goal-topup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.goal-topup-actions .btn {
+  flex: 1;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.goal-topup-actions .btn-green {
+  background: var(--dash-accent);
+}
+
+.goal-topup-actions .btn-green:hover {
+  background: var(--dash-accent-dark);
+}
+
+.goal-topup-actions .btn:disabled {
+  cursor: wait;
+}
+
+@media (max-width: 480px) {
+  .goal-topup-modal {
+    padding: 24px 20px;
+    border-radius: 19px;
+  }
+
+  .goal-topup-heading h2 {
+    font-size: 18px;
+  }
+
+  .goal-topup-totals {
+    flex-direction: column;
+    gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goal-topup-modal,
+  .goal-topup-progress span {
+    animation: none;
+    transition: none;
+  }
+}

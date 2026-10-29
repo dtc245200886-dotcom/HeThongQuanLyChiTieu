@@ -297,6 +297,35 @@
     </form>
   </div>
 </div>
+<div class="modal-overlay goal-topup-overlay" id="modal-goal-topup" role="dialog" aria-modal="true" aria-labelledby="goal-topup-title" onclick="if (event.target === this) closeGoalTopup()">
+  <section class="goal-topup-modal">
+    <button type="button" class="goal-topup-close" aria-label="Đóng" onclick="closeGoalTopup()"><i class="fas fa-times"></i></button>
+    <div class="goal-topup-heading">
+      <div class="goal-topup-icon" aria-hidden="true"><i class="fas fa-piggy-bank"></i></div>
+      <div><h2 id="goal-topup-title">Nạp tiền vào mục tiêu</h2><p>Thêm một khoản tiết kiệm cho kế hoạch của bạn.</p></div>
+    </div>
+    <div class="goal-topup-summary">
+      <div class="goal-topup-summary-label"><i class="fas fa-bullseye"></i><span id="goal-topup-name"></span></div>
+      <div class="goal-topup-progress" aria-hidden="true"><span id="goal-topup-progress"></span></div>
+      <div class="goal-topup-totals"><span>Đã tiết kiệm <strong id="goal-topup-current"></strong></span><span>Mục tiêu <strong id="goal-topup-target"></strong></span></div>
+    </div>
+    <form id="goal-topup-form" onsubmit="submitGoalTopup(event)" novalidate>
+      <label class="goal-topup-label" for="goal-topup-amount">Số tiền muốn nạp</label>
+      <div class="goal-topup-input-wrap"><input id="goal-topup-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Nhập số tiền" aria-describedby="goal-topup-error goal-topup-hint" required /><span>VNĐ</span></div>
+      <div id="goal-topup-error" class="goal-topup-error" aria-live="polite"></div>
+      <p id="goal-topup-hint" class="goal-topup-hint">Khoản tiền sẽ được cộng trực tiếp vào mục tiêu này.</p>
+      <div class="goal-topup-shortcuts" aria-label="Chọn nhanh số tiền">
+        <button type="button" onclick="setGoalTopupAmount(50000)">+50.000đ</button>
+        <button type="button" onclick="setGoalTopupAmount(100000)">+100.000đ</button>
+        <button type="button" onclick="setGoalTopupAmount(500000)">+500.000đ</button>
+      </div>
+      <div class="goal-topup-actions">
+        <button type="button" class="btn btn-outline" onclick="closeGoalTopup()">Để sau</button>
+        <button type="submit" class="btn btn-green" id="goal-topup-submit"><i class="fas fa-plus"></i> Nạp tiền</button>
+      </div>
+    </form>
+  </section>
+</div>
 <div class="modal-overlay" id="modal-cat">
   <div class="modal">
     <h3 id="cat-title">Thêm danh mục</h3>
@@ -904,13 +933,70 @@ async function saveGoal(e) {
 }
 
 async function addMoney(id) {
-  const amount = parseFloat(prompt('Số tiền cộng thêm:'));
-  if (!amount || amount <= 0) return;
+  const goal = (manageState.goal.allRows || []).find(item => item.id === id);
+  if (!goal) { toast('Không tìm thấy mục tiêu', false); return; }
+  activeGoalTopupId = id;
+  goalTopupPreviousFocus = document.activeElement;
+  const percentage = Math.min(100, Math.max(0, Number(goal.progress_percent ?? goal.percent) || 0));
+  document.getElementById('goal-topup-name').textContent = goal.name;
+  document.getElementById('goal-topup-current').textContent = fmt(goal.current_amount);
+  document.getElementById('goal-topup-target').textContent = fmt(goal.target_amount);
+  document.getElementById('goal-topup-progress').style.width = percentage + '%';
+  document.getElementById('goal-topup-amount').value = '';
+  document.getElementById('goal-topup-error').textContent = '';
+  document.getElementById('goal-topup-submit').disabled = false;
+  showModal('modal-goal-topup');
+  document.addEventListener('keydown', handleGoalTopupKeydown);
+  requestAnimationFrame(() => document.getElementById('goal-topup-amount').focus());
+}
+
+let activeGoalTopupId = 0;
+let goalTopupPreviousFocus = null;
+function handleGoalTopupKeydown(event) {
+  if (event.key === 'Escape') closeGoalTopup();
+}
+function closeGoalTopup() {
+  hideModal('modal-goal-topup');
+  document.removeEventListener('keydown', handleGoalTopupKeydown);
+  activeGoalTopupId = 0;
+  document.getElementById('goal-topup-form').reset();
+  document.getElementById('goal-topup-error').textContent = '';
+  if (goalTopupPreviousFocus?.isConnected) goalTopupPreviousFocus.focus();
+}
+function setGoalTopupAmount(amount) {
+  document.getElementById('goal-topup-amount').value = amount;
+  document.getElementById('goal-topup-error').textContent = '';
+  document.getElementById('goal-topup-amount').focus();
+}
+async function submitGoalTopup(event) {
+  event.preventDefault();
+  const amountInput = document.getElementById('goal-topup-amount');
+  const error = document.getElementById('goal-topup-error');
+  const amount = Number(amountInput.value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    error.textContent = 'Vui lòng nhập số tiền lớn hơn 0.';
+    amountInput.focus();
+    return;
+  }
+  if (!activeGoalTopupId) {
+    toast('Không tìm thấy mục tiêu cần nạp tiền.', false);
+    closeGoalTopup();
+    return;
+  }
+  const goalId = activeGoalTopupId;
+  const submit = document.getElementById('goal-topup-submit');
+  submit.disabled = true;
+  error.textContent = '';
   try {
-    const result = await api('/api/goals/' + id + '/add-money', { method: 'POST', body: JSON.stringify({ amount }) });
+    await api('/api/goals/' + goalId + '/add-money', { method: 'POST', body: JSON.stringify({ amount }) });
+    closeGoalTopup();
     toast('Đã cộng tiền');
     await Promise.all([loadGoals(), loadNotifications(true)]);
-  } catch (e) { toast(e.message, false); }
+  } catch (e) {
+    toast(e.message, false);
+    error.textContent = e.message;
+    submit.disabled = false;
+  }
 }
 
 async function predictGoal(id) {
