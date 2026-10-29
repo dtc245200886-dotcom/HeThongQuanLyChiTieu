@@ -233,13 +233,6 @@
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="modal-admin-chat-delete" role="dialog" aria-modal="true" aria-labelledby="admin-chat-delete-title">
-  <div class="modal modal-confirm">
-    <h3 id="admin-chat-delete-title">Xóa cuộc trò chuyện?</h3>
-    <p>Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa.</p>
-    <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="cancelAdminDeleteChat()">Hủy</button><button type="button" class="btn btn-danger" onclick="confirmAdminDeleteChat()">Xóa cuộc trò chuyện</button></div>
-  </div>
-</div>
 <script>
 
 function adminNav(e, page) {
@@ -435,7 +428,11 @@ async function setRole(id) {
 }
 
 async function delUser(id) {
-  if (!confirm('Xóa vĩnh viễn user và toàn bộ dữ liệu?')) return;
+  if (!await confirmDeleteAction({
+    title: 'Xóa tài khoản?',
+    message: 'Tài khoản này và toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn.',
+    confirmText: 'Xóa tài khoản'
+  })) return;
   try {
     await api('/api/admin/users/' + id, { method: 'DELETE' });
     toast('Đã xóa user');
@@ -638,14 +635,17 @@ async function sendAdminChatMessage(e) {
     if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-bubble error">${escapeHtml(message)}${message.includes('quá dài') ? ' <button type="button" class="chat-new-inline" onclick="createAdminChatConversation()">Cuộc trò chuyện mới</button>' : ''}</div></div>`;
   } finally { adminChatSending = false; input.disabled = false; input.focus(); requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; }); }
 }
-function requestAdminDeleteChat() { if (activeAdminChatId) document.getElementById('modal-admin-chat-delete').classList.add('show'); }
-function cancelAdminDeleteChat() { document.getElementById('modal-admin-chat-delete').classList.remove('show'); }
-async function confirmAdminDeleteChat() {
-  if (!activeAdminChatId) return;
+async function requestAdminDeleteChat() {
+  const chatId = activeAdminChatId;
+  if (!chatId || !await confirmDeleteAction({
+    title: 'Xóa cuộc trò chuyện?',
+    message: 'Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa và không thể khôi phục.',
+    confirmText: 'Xóa cuộc trò chuyện'
+  })) return;
   try {
-    await api('/api/chat/conversations/' + activeAdminChatId, { method: 'DELETE' });
-    adminChatConversations = adminChatConversations.filter(chat => chat.id !== activeAdminChatId);
-    cancelAdminDeleteChat();
+    await api('/api/chat/conversations/' + chatId, { method: 'DELETE' });
+    adminChatConversations = adminChatConversations.filter(chat => chat.id !== chatId);
+    if (activeAdminChatId !== chatId) return;
     activeAdminChatId = adminChatConversations[0]?.id || 0;
     if (activeAdminChatId) await openAdminChatConversation(activeAdminChatId); else resetAdminChatView();
   } catch (e) { toast(e.message, false); }

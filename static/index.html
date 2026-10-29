@@ -330,14 +330,6 @@
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="modal-chat-delete" role="dialog" aria-modal="true" aria-labelledby="chat-delete-title">
-  <div class="modal modal-confirm">
-    <h3 id="chat-delete-title">Xóa cuộc trò chuyện?</h3>
-    <p>Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa.</p>
-    <div class="modal-actions"><button type="button" class="btn btn-outline" onclick="cancelDeleteChat()">Hủy</button><button type="button" class="btn btn-danger" onclick="confirmDeleteChat()">Xóa cuộc trò chuyện</button></div>
-  </div>
-</div>
-
 <script>
 
 let categories = [];
@@ -615,11 +607,18 @@ async function markAllNotificationsRead(reload = true) {
   catch (e) { toast(e.message, false); }
 }
 async function deleteAllNotifications() {
+  if (!notifications.length) return;
+  if (!await confirmDeleteAction({
+    title: 'Xóa tất cả thông báo?',
+    message: `Bạn sắp xóa ${notifications.length} thông báo. Thao tác này không thể hoàn tác.`,
+    confirmText: 'Xóa tất cả'
+  })) return;
   try { await api('/api/notifications', { method: 'DELETE' }); await loadNotifications(); toast('Đã xóa tất cả thông báo'); }
   catch (e) { toast(e.message, false); }
 }
 async function deleteNotification(event, id) {
   event.stopPropagation();
+  if (!await confirmDeleteAction({ title: 'Xóa thông báo?', message: 'Thông báo này sẽ bị xóa và không thể khôi phục.' })) return;
   try { await api('/api/notifications/' + id, { method: 'DELETE' }); await loadNotifications(); }
   catch (e) { toast(e.message, false); }
 }
@@ -728,7 +727,7 @@ async function saveTx(e) {
 }
 
 async function delTx(id) {
-  if (!confirm('Xóa giao dịch?')) return;
+  if (!await confirmDeleteAction({ title: 'Xóa giao dịch?', message: 'Giao dịch này sẽ bị xóa và không thể khôi phục.' })) return;
   try { await api('/api/transactions/' + id, { method: 'DELETE' }); await Promise.all([loadTx(), loadDash(), loadBudgets()]); toast('Đã xóa'); }
   catch (e) { toast(e.message, false); }
 }
@@ -820,7 +819,7 @@ async function saveBudget(e) {
 }
 
 async function delBudget(id) {
-  if (!confirm('Xóa ngân sách?')) return;
+  if (!await confirmDeleteAction({ title: 'Xóa ngân sách?', message: 'Ngân sách này sẽ bị xóa và không thể khôi phục.' })) return;
   try { await api('/api/budgets/' + id, { method: 'DELETE' }); await loadBudgets(); toast('Đã xóa'); }
   catch (e) { toast(e.message, false); }
 }
@@ -925,7 +924,7 @@ async function predictGoal(id) {
 }
 
 async function delGoal(id) {
-  if (!confirm('Xóa mục tiêu?')) return;
+  if (!await confirmDeleteAction({ title: 'Xóa mục tiêu?', message: 'Mục tiêu này sẽ bị xóa và không thể khôi phục.' })) return;
   try { await api('/api/goals/' + id, { method: 'DELETE' }); await loadGoals(); toast('Đã xóa'); }
   catch (e) { toast(e.message, false); }
 }
@@ -988,7 +987,7 @@ async function saveCat(e) {
 }
 
 async function delCat(id) {
-  if (!confirm('Xóa danh mục?')) return;
+  if (!await confirmDeleteAction({ title: 'Xóa danh mục?', message: 'Danh mục này sẽ bị xóa nếu không còn dữ liệu đang sử dụng.' })) return;
   try { await api('/api/categories/' + id, { method: 'DELETE' }); await loadCats(); toast('Đã xóa'); }
   catch (e) { toast(e.message, false); }
 }
@@ -1143,14 +1142,17 @@ async function sendChatMessage(e) {
     if (pending) pending.outerHTML = `<div class="chat-message assistant"><div class="chat-bubble error">${escapeHtml(message)}${message.includes('quá dài') ? ' <button type="button" class="chat-new-inline" onclick="createChatConversation()">Cuộc trò chuyện mới</button>' : ''}</div></div>`;
   } finally { chatSending = false; input.disabled = false; input.focus(); requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; }); }
 }
-function requestDeleteChat() { if (activeChatId) document.getElementById('modal-chat-delete').classList.add('show'); }
-function cancelDeleteChat() { document.getElementById('modal-chat-delete').classList.remove('show'); }
-async function confirmDeleteChat() {
-  if (!activeChatId) return;
+async function requestDeleteChat() {
+  const chatId = activeChatId;
+  if (!chatId || !await confirmDeleteAction({
+    title: 'Xóa cuộc trò chuyện?',
+    message: 'Toàn bộ tin nhắn trong cuộc trò chuyện này sẽ bị xóa và không thể khôi phục.',
+    confirmText: 'Xóa cuộc trò chuyện'
+  })) return;
   try {
-    await api('/api/chat/conversations/' + activeChatId, { method: 'DELETE' });
-    chatConversations = chatConversations.filter(chat => chat.id !== activeChatId);
-    cancelDeleteChat();
+    await api('/api/chat/conversations/' + chatId, { method: 'DELETE' });
+    chatConversations = chatConversations.filter(chat => chat.id !== chatId);
+    if (activeChatId !== chatId) return;
     activeChatId = chatConversations[0]?.id || 0;
     if (activeChatId) await openChatConversation(activeChatId); else resetChatView();
   } catch (e) { toast(e.message, false); }
@@ -1181,7 +1183,7 @@ function renderAIHistoryList(elementId, kind) {
 }
 async function deleteSavedAI(event, id) {
   event.stopPropagation();
-  if (!confirm('Xóa bản ghi lịch sử AI này?')) return;
+  if (!await confirmDeleteAction({ title: 'Xóa lịch sử AI?', message: 'Bản ghi này sẽ bị xóa và không thể khôi phục.' })) return;
   try {
     await api('/api/ai/generations/' + id, { method: 'DELETE' });
     savedAI = savedAI.filter(item => item.id !== id);

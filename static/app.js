@@ -36,6 +36,84 @@ function escapeHtml(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   })[char]);
 }
+let activeDeleteConfirmation = false;
+function confirmDeleteAction({ title = 'Xác nhận xóa', message = 'Bạn có chắc muốn xóa mục này?', confirmText = 'Xóa' } = {}) {
+  if (activeDeleteConfirmation) return Promise.resolve(false);
+  activeDeleteConfirmation = true;
+
+  return new Promise(resolve => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    const overlay = document.createElement('div');
+    overlay.className = 'delete-confirm-overlay';
+    const dialog = document.createElement('section');
+    dialog.className = 'delete-confirm-dialog';
+    dialog.setAttribute('role', 'alertdialog');
+    dialog.setAttribute('aria-modal', 'true');
+
+    const titleId = 'delete-confirm-title';
+    const messageId = 'delete-confirm-message';
+    dialog.setAttribute('aria-labelledby', titleId);
+    dialog.setAttribute('aria-describedby', messageId);
+
+    const icon = document.createElement('div');
+    icon.className = 'delete-confirm-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    const iconGlyph = document.createElement('i');
+    iconGlyph.className = 'fas fa-trash-alt';
+    icon.appendChild(iconGlyph);
+
+    const heading = document.createElement('h2');
+    heading.id = titleId;
+    heading.textContent = title;
+    const description = document.createElement('p');
+    description.id = messageId;
+    description.textContent = message;
+
+    const actions = document.createElement('div');
+    actions.className = 'delete-confirm-actions';
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'delete-confirm-cancel';
+    cancelButton.textContent = 'Hủy';
+    const confirmButton = document.createElement('button');
+    confirmButton.type = 'button';
+    confirmButton.className = 'delete-confirm-submit';
+    confirmButton.textContent = confirmText;
+    actions.append(cancelButton, confirmButton);
+    dialog.append(icon, heading, description, actions);
+    overlay.appendChild(dialog);
+
+    const finish = confirmed => {
+      document.removeEventListener('keydown', onKeyDown);
+      overlay.remove();
+      document.body.style.overflow = previousOverflow;
+      activeDeleteConfirmation = false;
+      if (previousFocus?.isConnected) previousFocus.focus();
+      resolve(confirmed);
+    };
+    const onKeyDown = event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finish(false);
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        (document.activeElement === cancelButton ? confirmButton : cancelButton).focus();
+      }
+    };
+
+    cancelButton.addEventListener('click', () => finish(false));
+    confirmButton.addEventListener('click', () => finish(true));
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) finish(false);
+    });
+    document.addEventListener('keydown', onKeyDown);
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(overlay);
+    cancelButton.focus();
+    requestAnimationFrame(() => overlay.classList.add('is-visible'));
+  });
+}
 function toast(msg, ok = true) {
   let el = document.getElementById('toast');
   if (!el) {

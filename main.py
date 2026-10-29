@@ -2076,7 +2076,7 @@ if os.path.isdir(STATIC_DIR):
 def root():
     index = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index):
-        return FileResponse(index)
+        return FileResponse(index, headers={"Cache-Control": "no-store"})
     return {"message": "Chi tiêu AI API", "docs": "/docs"}
 
 
@@ -2084,7 +2084,7 @@ def root():
 def admin_page():
     path = os.path.join(STATIC_DIR, "admin.html")
     if os.path.isfile(path):
-        return FileResponse(path)
+        return FileResponse(path, headers={"Cache-Control": "no-store"})
     return {"message": "Đặt admin.html vào static/"}
 
 
@@ -2092,5 +2092,5 @@ def admin_page():
 def login_page():
     path = os.path.join(STATIC_DIR, "login.html")
     if os.path.isfile(path):
-        return FileResponse(path)
+        return FileResponse(path, headers={"Cache-Control": "no-store"})
     return {"message": "Đặt login.html vào static/"}
