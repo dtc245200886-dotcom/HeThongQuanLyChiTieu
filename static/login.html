@@ -3,289 +3,496 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f8f7" />
+  <meta name="description" content="Đăng nhập hoặc tạo tài khoản để quản lý thu chi cá nhân." />
   <title>Đăng nhập - Chi tiêu AI</title>
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="stylesheet" href="/static/auth.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body>
-<div id="auth-screen" style="display:flex">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="emoji">💰</div>
-      <h1>Quản lý Chi tiêu AI</h1>
-      <p>Hệ thống hỗ trợ quản lý tài chính cá nhân</p>
-    </div>
-    <div class="auth-tabs">
-      <button id="tab-login" class="active" type="button" onclick="switchTab('login')">Đăng nhập</button>
-      <button id="tab-register" type="button" onclick="switchTab('register')">Đăng ký</button>
-    </div>
-    <form id="auth-form" novalidate onsubmit="handleAuth(event)">
-      <div class="form-group hidden" id="fullname-field">
-        <label>Họ tên</label>
-        <input type="text" id="full_name" placeholder="Nguyễn Văn A" autocomplete="name" />
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-          <input type="text" id="email" required placeholder="email@example.com" autocomplete="username" inputmode="email" />
-      </div>
-      <div class="form-group">
-        <label>Mật khẩu</label>
-        <div class="password-wrap">
-          <input type="password" id="password" required minlength="6" placeholder="••••••" autocomplete="current-password" />
-          <button type="button" class="password-toggle" onclick="togglePw()">
-            <i class="fas fa-eye" id="icon-pw"></i><span id="pw-label">Hiện</span>
-          </button>
+<body class="auth-page">
+  <main id="auth-screen" class="auth-layout">
+    <section class="auth-story" aria-label="Giới thiệu Chi tiêu AI">
+      <a class="auth-brand" href="/login" aria-label="Chi tiêu AI - trang đăng nhập">
+        <span class="auth-brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M7 23.5V16m6 7.5V9m6 14.5v-5m6 5V5" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            <path d="M5 26.5h22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span>Chi tiêu <strong>AI</strong></span>
+      </a>
+
+      <div class="auth-story-content">
+        <span class="auth-eyebrow"><span></span> Tài chính cá nhân, rõ ràng hơn</span>
+        <h1>Hiểu dòng tiền.<br /><span>Làm chủ kế hoạch.</span></h1>
+        <p>Một nơi để theo dõi thu chi, ngân sách và những mục tiêu bạn đang hướng tới.</p>
+        <div class="auth-benefits">
+          <div class="auth-benefit">
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Theo dõi dễ dàng</strong><small>Thu, chi và ngân sách trong cùng một nơi</small></span>
+          </div>
+          <div class="auth-benefit">
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5v17m5-13H9.8a3.3 3.3 0 0 0 0 6.6h4.4a3.3 3.3 0 0 1 0 6.6H6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+            </span>
+            <span><strong>Tiến gần mục tiêu</strong><small>Nhìn thấy tiến độ tiết kiệm của bạn</small></span>
+          </div>
+          <div class="auth-benefit">
+            <span class="auth-benefit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5 19 6v5.3c0 4.3-2.9 7.3-7 9.2-4.1-1.9-7-4.9-7-9.2V6l7-2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span><strong>Riêng tư theo tài khoản</strong><small>Dữ liệu tài chính gắn với tài khoản của bạn</small></span>
+          </div>
         </div>
       </div>
-      <div class="form-group hidden" id="confirm-password-field">
-        <label>Xác nhận mật khẩu</label>
-        <div class="password-wrap"><input type="password" id="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" /><button type="button" class="password-toggle" onclick="toggleConfirmPw()"><i class="fas fa-eye" id="icon-confirm-pw"></i><span id="confirm-pw-label">Hiện</span></button></div>
+      <div class="auth-story-footer">Bắt đầu từ những bước nhỏ, vững vàng hơn mỗi ngày.</div>
+      <span class="auth-orb auth-orb-one" aria-hidden="true"></span>
+      <span class="auth-orb auth-orb-two" aria-hidden="true"></span>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="auth-heading">
+      <div class="auth-card">
+        <div class="auth-mobile-brand">
+          <span class="auth-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M7 23.5V16m6 7.5V9m6 14.5v-5m6 5V5" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M5 26.5h22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+          </span>
+          <span>Chi tiêu <strong>AI</strong></span>
+        </div>
+        <div class="auth-heading">
+          <span class="auth-heading-kicker">Chào mừng bạn</span>
+          <h2 id="auth-heading">Đăng nhập tài khoản</h2>
+          <p id="auth-subheading">Tiếp tục hành trình quản lý tài chính của bạn.</p>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Chọn đăng nhập hoặc đăng ký">
+          <button id="tab-login" class="active" type="button" role="tab" aria-selected="true" aria-controls="auth-form" onclick="switchTab('login')">Đăng nhập</button>
+          <button id="tab-register" type="button" role="tab" aria-selected="false" aria-controls="auth-form" onclick="switchTab('register')">Tạo tài khoản</button>
+        </div>
+
+        <form id="auth-form" autocomplete="off" novalidate onsubmit="handleAuth(event)">
+          <div class="auth-field hidden" id="fullname-field">
+            <label for="full_name">Họ và tên</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 20a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+              <input type="text" id="full_name" name="name" placeholder="Nguyễn Văn An" autocomplete="name" minlength="2" />
+            </div>
+          </div>
+          <div class="auth-field">
+            <label for="email">Email</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" stroke-width="1.7" /><path d="m5 7 7 5.5L19 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <input type="email" id="email" name="email" required placeholder="ten@email.com" autocomplete="off" inputmode="email" />
+            </div>
+          </div>
+          <div class="auth-field">
+            <div class="auth-label-row">
+              <label for="password">Mật khẩu</label>
+              <button type="button" id="forgot-password-btn" class="auth-text-button" onclick="showForgotPassword()">Quên mật khẩu?</button>
+            </div>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+              <input type="password" id="password" name="password" required minlength="6" placeholder="Nhập mật khẩu" autocomplete="off" />
+              <button type="button" class="auth-password-toggle" onclick="togglePw()" aria-label="Hiện mật khẩu">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.2-6 9.2-6 9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6Z" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="auth-field hidden" id="confirm-password-field">
+            <label for="confirm_password">Xác nhận mật khẩu</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+              <input type="password" id="confirm_password" name="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" />
+              <button type="button" class="auth-password-toggle" onclick="toggleConfirmPw()" aria-label="Hiện mật khẩu xác nhận">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.2-6 9.2-6 9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6Z" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7" /></svg>
+              </button>
+            </div>
+            <small class="auth-field-hint">Mật khẩu cần có ít nhất 6 ký tự, gồm chữ và số.</small>
+          </div>
+
+          <button type="submit" class="auth-submit" id="auth-btn">
+            <span>Đăng nhập</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <p id="auth-error" class="auth-message auth-message-error" role="alert" aria-live="polite"></p>
+          <p id="auth-success" class="auth-message auth-message-success" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="auth-divider"><span></span><small>AN TOÀN & RIÊNG TƯ</small><span></span></div>
+        <p class="auth-privacy-note">Thông tin tài chính của bạn được lưu theo tài khoản cá nhân. Không chia sẻ mật khẩu với người khác.</p>
+        <p class="auth-admin-note">Tài khoản quản trị do hệ thống cấp, không đăng ký công khai.</p>
       </div>
-      <button type="submit" class="btn-primary" id="auth-btn">Đăng nhập</button>
-      <button type="button" id="forgot-password-btn" class="auth-link" onclick="showForgotPassword()">Quên mật khẩu?</button>
-      <p id="auth-error" class="auth-error"></p>
-      <p id="auth-success" class="auth-success"></p>
-    </form>
-    <form id="password-reset-form" class="hidden" onsubmit="submitPasswordReset(event)">
-      <h2>Đặt lại mật khẩu</h2>
-      <p>Liên kết có hiệu lực trong 15 phút.</p>
-      <input id="reset-token" type="hidden" />
-      <div class="form-group">
-        <label>Mật khẩu mới</label>
-        <input id="reset-new-password" type="password" minlength="8" maxlength="128" required autocomplete="new-password" />
+      <p class="auth-copyright">© <span id="current-year"></span> Chi tiêu AI <span aria-hidden="true">·</span> Quản lý tài chính theo cách của bạn</p>
+    </section>
+  </main>
+
+  <div id="forgot-modal" class="auth-modal" hidden>
+    <button class="auth-modal-backdrop" type="button" aria-label="Đóng cửa sổ" onclick="closeForgotPassword()"></button>
+    <section class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-heading" aria-describedby="forgot-description">
+      <button class="auth-modal-close" type="button" aria-label="Đóng" onclick="closeForgotPassword()">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+      </button>
+      <div class="auth-modal-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
       </div>
-      <div class="form-group">
-        <label>Xác nhận mật khẩu mới</label>
-        <input id="reset-confirm-password" type="password" minlength="8" maxlength="128" required autocomplete="new-password" />
+      <div id="forgot-step-email">
+        <span class="auth-heading-kicker">Khôi phục quyền truy cập</span>
+        <h2 id="forgot-heading">Quên mật khẩu?</h2>
+        <p id="forgot-description" class="auth-modal-description">Nhập email đã đăng ký. Nếu tài khoản tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi qua email.</p>
+        <form id="forgot-email-form" novalidate onsubmit="requestPasswordReset(event)">
+          <div class="auth-field">
+            <label for="reset-email">Email tài khoản</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" stroke-width="1.7" /><path d="m5 7 7 5.5L19 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <input type="email" id="reset-email" required placeholder="ten@email.com" autocomplete="email" />
+            </div>
+          </div>
+          <button type="submit" class="auth-submit" id="reset-request-btn"><span>Gửi hướng dẫn</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+        </form>
       </div>
-      <button type="submit" class="btn-primary" id="reset-password-submit">Lưu mật khẩu mới</button>
-      <button type="button" class="auth-link" onclick="cancelPasswordReset()">Quay lại đăng nhập</button>
-      <p id="reset-error" class="auth-error"></p>
-    </form>
-    <p class="hint" style="text-align:center;margin-top:14px;color:#9ca3af">
-      Tài khoản quản trị do hệ thống cấp — không đăng ký công khai.
-    </p>
+      <div id="forgot-step-reset" hidden>
+        <span class="auth-heading-kicker">Bước tiếp theo</span>
+        <h2>Đặt mật khẩu mới</h2>
+        <p class="auth-modal-description">Dùng mã khôi phục để xác nhận tài khoản và tạo mật khẩu mới.</p>
+        <form id="reset-password-form" novalidate onsubmit="completePasswordReset(event)">
+          <div class="auth-field">
+            <label for="reset-token">Mã khôi phục</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><circle cx="12" cy="15" r="1" fill="currentColor" /></svg>
+              <input type="text" id="reset-token" required minlength="32" maxlength="128" placeholder="Dán mã khôi phục" autocomplete="one-time-code" />
+            </div>
+          </div>
+          <div class="auth-field">
+            <label for="reset-new-password">Mật khẩu mới</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+              <input type="password" id="reset-new-password" required minlength="8" maxlength="128" placeholder="Ít nhất 8 ký tự, gồm chữ và số" autocomplete="new-password" />
+              <button type="button" class="auth-password-toggle" onclick="toggleResetPassword()" aria-label="Hiện mật khẩu mới">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.8 12s3.2-6 9.2-6 9.2 6 9.2 6-3.2 6-9.2 6-9.2-6-9.2-6Z" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label for="reset-confirm-password">Xác nhận mật khẩu mới</label>
+            <div class="auth-input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+              <input type="password" id="reset-confirm-password" required minlength="8" maxlength="128" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" />
+            </div>
+          </div>
+          <button type="submit" class="auth-submit" id="reset-submit-btn"><span>Cập nhật mật khẩu</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+        </form>
+      </div>
+      <p id="reset-error" class="auth-message auth-message-error" role="alert" aria-live="polite"></p>
+      <p id="reset-success" class="auth-message auth-message-success" role="status" aria-live="polite"></p>
+      <button id="forgot-back-btn" class="auth-modal-back" type="button" onclick="returnToResetEmail()">← Quay lại nhập email</button>
+    </section>
   </div>
-</div>
-<script src="/static/app.js"></script>
-<script>
-let mode = 'login';
 
-async function showForgotPassword() {
-  const email = document.getElementById('email').value.trim();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showErr('Vui lòng nhập email hợp lệ trước khi đặt lại mật khẩu.');
-    return;
-  }
-  try {
-    const response = await fetch(API + '/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Không thể gửi email đặt lại mật khẩu.');
-    const success = document.getElementById('auth-success');
-    success.textContent = data.message;
-    success.classList.add('show');
-  } catch (error) {
-    showErr(error.message || 'Không kết nối được server.');
-  }
-}
+  <script src="/static/app.js"></script>
+  <script>
+    let mode = 'login';
+    document.getElementById('current-year').textContent = new Date().getFullYear();
 
-async function submitPasswordReset(event) {
-  event.preventDefault();
-  const password = document.getElementById('reset-new-password').value;
-  const errorElement = document.getElementById('reset-error');
-  errorElement.classList.remove('show');
-  if (password.length < 8 || !/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) {
-    errorElement.textContent = 'Mật khẩu phải có ít nhất 8 ký tự, gồm cả chữ và số.';
-    errorElement.classList.add('show');
-    return;
-  }
-  if (new TextEncoder().encode(password).length > 72) {
-    errorElement.textContent = 'Mật khẩu không được vượt quá 72 byte UTF-8.';
-    errorElement.classList.add('show');
-    return;
-  }
-  if (password !== document.getElementById('reset-confirm-password').value) {
-    errorElement.textContent = 'Xác nhận mật khẩu không khớp.';
-    errorElement.classList.add('show');
-    return;
-  }
-  const submit = document.getElementById('reset-password-submit');
-  submit.disabled = true;
-  try {
-    const response = await fetch(API + '/api/auth/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: document.getElementById('reset-token').value,
-        new_password: password
-      })
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Không thể đặt lại mật khẩu.');
-    cancelPasswordReset();
-    switchTab('login');
-    const success = document.getElementById('auth-success');
-    success.textContent = data.message;
-    success.classList.add('show');
-  } catch (error) {
-    errorElement.textContent = error.message || 'Không kết nối được server.';
-    errorElement.classList.add('show');
-  } finally {
-    submit.disabled = false;
-  }
-}
+    function showAuthMessage(id, message) {
+      const element = document.getElementById(id);
+      element.textContent = message;
+      element.classList.toggle('show', Boolean(message));
+    }
 
-function cancelPasswordReset() {
-  document.getElementById('password-reset-form').classList.add('hidden');
-  document.getElementById('auth-form').classList.remove('hidden');
-  document.getElementById('password-reset-form').reset();
-  history.replaceState(null, '', location.pathname);
-}
+    function showErr(message) {
+      showAuthMessage('auth-error', message);
+      showAuthMessage('auth-success', '');
+    }
 
-function initializePasswordReset() {
-  const resetToken = new URLSearchParams(location.hash.slice(1)).get('reset_token');
-  if (!resetToken) return false;
-  document.getElementById('reset-token').value = resetToken;
-  document.getElementById('auth-form').classList.add('hidden');
-  document.getElementById('password-reset-form').classList.remove('hidden');
-  history.replaceState(null, '', location.pathname);
-  return true;
-}
-
-function switchTab(m) {
-  mode = m;
-  document.getElementById('tab-login').classList.toggle('active', m === 'login');
-  document.getElementById('tab-register').classList.toggle('active', m === 'register');
-  document.getElementById('fullname-field').classList.toggle('hidden', m !== 'register');
-  document.getElementById('confirm-password-field').classList.toggle('hidden', m !== 'register');
-  document.getElementById('auth-btn').textContent = m === 'login' ? 'Đăng nhập' : 'Đăng ký';
-  document.getElementById('auth-error').classList.remove('show');
-  document.getElementById('auth-success').classList.remove('show');
-  document.getElementById('password').value = '';
-  document.getElementById('confirm_password').value = '';
-  document.getElementById('password').setAttribute('autocomplete', m === 'login' ? 'current-password' : 'new-password');
-}
-
-function togglePw() {
-  const i = document.getElementById('password');
-  const icon = document.getElementById('icon-pw');
-  const lab = document.getElementById('pw-label');
-  if (i.type === 'password') { i.type = 'text'; icon.className = 'fas fa-eye-slash'; lab.textContent = 'Ẩn'; }
-  else { i.type = 'password'; icon.className = 'fas fa-eye'; lab.textContent = 'Hiện'; }
-}
-function toggleConfirmPw() {
-  const input = document.getElementById('confirm_password');
-  const icon = document.getElementById('icon-confirm-pw');
-  const label = document.getElementById('confirm-pw-label');
-  const visible = input.type === 'password';
-  input.type = visible ? 'text' : 'password';
-  icon.className = visible ? 'fas fa-eye-slash' : 'fas fa-eye';
-  label.textContent = visible ? 'Ẩn' : 'Hiện';
-}
-
-function showErr(msg) {
-  const el = document.getElementById('auth-error');
-  el.textContent = msg;
-  el.classList.add('show');
-}
-
-async function handleAuth(e) {
-  e.preventDefault();
-  document.getElementById('auth-error').classList.remove('show');
-  document.getElementById('auth-success').classList.remove('show');
-  const email = document.getElementById('email').value.trim().toLowerCase();
-  const password = document.getElementById('password').value;
-  const full_name = document.getElementById('full_name').value.trim();
-  const confirmPassword = document.getElementById('confirm_password').value;
-  const submitButton = document.getElementById('auth-btn');
-
-  try {
-    let data;
-    if (!email) { showErr('Vui lòng nhập email.'); return; }
-    if (!email.includes('@')) { showErr('Email phải chứa ký tự @.'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Email không đúng định dạng.'); return; }
-    if (!password) { showErr('Vui lòng nhập mật khẩu.'); return; }
-    if (password.length < 6) { showErr('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
-    if (mode === 'register') {
-      if (full_name.length < 2) { showErr('Họ tên phải có ít nhất 2 ký tự'); return; }
-      if (password.length < 6) { showErr('Mật khẩu phải có ít nhất 6 ký tự'); return; }
-      if (!/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) { showErr('Mật khẩu phải gồm cả chữ và số'); return; }
-      if (!confirmPassword) { showErr('Vui lòng nhập mật khẩu xác nhận.'); return; }
-      if (password !== confirmPassword) { showErr('Xác nhận mật khẩu không khớp'); return; }
-      submitButton.disabled = true;
-      submitButton.textContent = 'Đang tạo tài khoản...';
-      const res = await fetch(API + '/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name })
-      });
-      data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const d = data.detail;
-        throw new Error(typeof d === 'string' ? d : (Array.isArray(d) ? d.map(x => x.msg).join(', ') : 'Đăng ký thất bại'));
-      }
-      switchTab('login');
-      document.getElementById('email').value = email;
+    function switchTab(nextMode) {
+      mode = nextMode;
+      const isLogin = mode === 'login';
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-register').classList.toggle('active', !isLogin);
+      document.getElementById('tab-login').setAttribute('aria-selected', String(isLogin));
+      document.getElementById('tab-register').setAttribute('aria-selected', String(!isLogin));
+      document.getElementById('fullname-field').classList.toggle('hidden', isLogin);
+      document.getElementById('confirm-password-field').classList.toggle('hidden', isLogin);
+      document.getElementById('forgot-password-btn').classList.toggle('hidden', !isLogin);
+      document.getElementById('auth-heading').textContent = isLogin ? 'Đăng nhập tài khoản' : 'Tạo tài khoản mới';
+      document.getElementById('auth-subheading').textContent = isLogin
+        ? 'Tiếp tục hành trình quản lý tài chính của bạn.'
+        : 'Chỉ mất một phút để bắt đầu theo dõi tài chính.';
+      document.querySelector('#auth-btn span').textContent = isLogin ? 'Đăng nhập' : 'Tạo tài khoản';
+      showAuthMessage('auth-error', '');
+      showAuthMessage('auth-success', '');
       document.getElementById('password').value = '';
-      const success = document.getElementById('auth-success');
-      success.textContent = 'Đăng ký thành công. Vui lòng đăng nhập.';
-      success.classList.add('show');
-      return;
+      document.getElementById('confirm_password').value = '';
+      document.getElementById('password').setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
+      document.getElementById('password').setAttribute('placeholder', isLogin ? 'Nhập mật khẩu' : 'Ít nhất 6 ký tự');
+      document.getElementById('password').setAttribute('aria-label', isLogin ? 'Mật khẩu' : 'Tạo mật khẩu');
+      document.getElementById('auth-btn').disabled = false;
     }
 
-    const form = new URLSearchParams();
-    form.append('username', email);
-    form.append('password', password);
-    const res = await fetch(API + '/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form
+    function togglePasswordVisibility(inputId, button) {
+      const input = document.getElementById(inputId);
+      const showing = input.type === 'password';
+      input.type = showing ? 'text' : 'password';
+      button.setAttribute('aria-label', showing ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    }
+
+    function togglePw() {
+      togglePasswordVisibility('password', document.querySelector('#password + .auth-password-toggle'));
+    }
+
+    function toggleConfirmPw() {
+      togglePasswordVisibility('confirm_password', document.querySelector('#confirm_password + .auth-password-toggle'));
+    }
+
+    function toggleResetPassword() {
+      togglePasswordVisibility('reset-new-password', document.querySelector('#reset-new-password + .auth-password-toggle'));
+    }
+
+    function showForgotPassword() {
+      const modal = document.getElementById('forgot-modal');
+      modal.hidden = false;
+      document.body.classList.add('auth-modal-open');
+      document.getElementById('reset-email').value = document.getElementById('email').value.trim();
+      returnToResetEmail(false);
+      window.setTimeout(() => document.getElementById('reset-email').focus(), 0);
+    }
+
+    function closeForgotPassword() {
+      document.getElementById('forgot-modal').hidden = true;
+      document.body.classList.remove('auth-modal-open');
+      showAuthMessage('reset-error', '');
+      showAuthMessage('reset-success', '');
+      document.getElementById('forgot-modal').querySelector('#reset-email').blur();
+    }
+
+    function returnToResetEmail(clearMessages = true) {
+      document.getElementById('forgot-step-email').hidden = false;
+      document.getElementById('forgot-step-reset').hidden = true;
+      document.getElementById('forgot-back-btn').hidden = true;
+      if (clearMessages) {
+        showAuthMessage('reset-error', '');
+        showAuthMessage('reset-success', '');
+      }
+    }
+
+    function initializePasswordResetFromLink() {
+      const resetToken = new URLSearchParams(location.hash.slice(1)).get('reset_token');
+      if (!resetToken) return false;
+      document.getElementById('reset-token').value = resetToken;
+      document.getElementById('forgot-step-email').hidden = true;
+      document.getElementById('forgot-step-reset').hidden = false;
+      document.getElementById('forgot-back-btn').hidden = true;
+      document.getElementById('forgot-modal').hidden = false;
+      document.body.classList.add('auth-modal-open');
+      history.replaceState(null, '', location.pathname);
+      document.getElementById('reset-new-password').focus();
+      return true;
+    }
+
+    async function requestPasswordReset(event) {
+      event.preventDefault();
+      const email = document.getElementById('reset-email').value.trim().toLowerCase();
+      const button = document.getElementById('reset-request-btn');
+      showAuthMessage('reset-error', '');
+      showAuthMessage('reset-success', '');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showAuthMessage('reset-error', 'Vui lòng nhập email hợp lệ.');
+        return;
+      }
+
+      button.disabled = true;
+      button.querySelector('span').textContent = 'Đang gửi...';
+      try {
+        const response = await fetch(API + '/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = data.detail;
+          throw new Error(typeof detail === 'string' ? detail : 'Không thể tạo mã khôi phục.');
+        }
+
+        showAuthMessage('reset-success', data.message || 'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi đến hộp thư.');
+      } catch (error) {
+        showAuthMessage('reset-error', error.name === 'TypeError'
+          ? 'Không kết nối được máy chủ. Vui lòng thử lại.'
+          : error.message || 'Không thể tạo mã khôi phục.');
+      } finally {
+        button.disabled = false;
+        button.querySelector('span').textContent = 'Gửi hướng dẫn';
+      }
+    }
+
+    async function completePasswordReset(event) {
+      event.preventDefault();
+      const token = document.getElementById('reset-token').value.trim();
+      const password = document.getElementById('reset-new-password').value;
+      const confirmation = document.getElementById('reset-confirm-password').value;
+      const button = document.getElementById('reset-submit-btn');
+      showAuthMessage('reset-error', '');
+      showAuthMessage('reset-success', '');
+
+      if (token.length < 32) {
+        showAuthMessage('reset-error', 'Mã khôi phục chưa hợp lệ.');
+        return;
+      }
+      if (password.length < 8 || !/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) {
+        showAuthMessage('reset-error', 'Mật khẩu cần ít nhất 8 ký tự, gồm cả chữ và số.');
+        return;
+      }
+      if (password !== confirmation) {
+        showAuthMessage('reset-error', 'Xác nhận mật khẩu không khớp.');
+        return;
+      }
+
+      button.disabled = true;
+      button.querySelector('span').textContent = 'Đang cập nhật...';
+      try {
+        const response = await fetch(API + '/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, new_password: password })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = data.detail;
+          throw new Error(typeof detail === 'string' ? detail : 'Không thể cập nhật mật khẩu.');
+        }
+        closeForgotPassword();
+        switchTab('login');
+        document.getElementById('email').value = document.getElementById('reset-email').value.trim();
+        document.getElementById('password').value = '';
+        showAuthMessage('auth-success', data.message || 'Đổi mật khẩu thành công. Hãy đăng nhập lại.');
+        document.getElementById('reset-password-form').reset();
+      } catch (error) {
+        showAuthMessage('reset-error', error.name === 'TypeError'
+          ? 'Không kết nối được máy chủ. Vui lòng thử lại.'
+          : error.message || 'Không thể cập nhật mật khẩu.');
+      } finally {
+        button.disabled = false;
+        button.querySelector('span').textContent = 'Cập nhật mật khẩu';
+      }
+    }
+
+    async function handleAuth(event) {
+      event.preventDefault();
+      showAuthMessage('auth-error', '');
+      showAuthMessage('auth-success', '');
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const fullName = document.getElementById('full_name').value.trim();
+      const confirmPassword = document.getElementById('confirm_password').value;
+      const submitButton = document.getElementById('auth-btn');
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showErr('Vui lòng nhập địa chỉ email hợp lệ.');
+        return;
+      }
+      if (!password || password.length < 6) {
+        showErr('Mật khẩu phải có ít nhất 6 ký tự.');
+        return;
+      }
+      if (mode === 'register') {
+        if (fullName.length < 2) {
+          showErr('Họ tên phải có ít nhất 2 ký tự.');
+          return;
+        }
+        if (!/[A-Za-zÀ-ỹ]/.test(password) || !/\d/.test(password)) {
+          showErr('Mật khẩu cần có cả chữ và số.');
+          return;
+        }
+        if (password !== confirmPassword) {
+          showErr('Xác nhận mật khẩu không khớp.');
+          return;
+        }
+      }
+
+      submitButton.disabled = true;
+      submitButton.querySelector('span').textContent = mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...';
+      try {
+        let response;
+        if (mode === 'register') {
+          response = await fetch(API + '/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, full_name: fullName })
+          });
+        } else {
+          const form = new URLSearchParams();
+          form.append('username', email);
+          form.append('password', password);
+          response = await fetch(API + '/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: form
+          });
+        }
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const detail = data.detail;
+          throw new Error(typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail) ? detail.map(item => item.msg).join(', ')
+              : mode === 'login' ? 'Email hoặc mật khẩu không chính xác.' : 'Đăng ký chưa thành công.');
+        }
+
+        if (mode === 'register') {
+          document.getElementById('password').value = '';
+          document.getElementById('confirm_password').value = '';
+          switchTab('login');
+          document.getElementById('email').value = email;
+          showAuthMessage('auth-success', 'Tạo tài khoản thành công. Đăng nhập để tiếp tục nhé.');
+          return;
+        }
+
+        saveSession(data);
+        location.href = data.role === 'admin' ? '/admin' : '/';
+      } catch (error) {
+        showErr(error.name === 'TypeError'
+          ? 'Không kết nối được máy chủ. Hãy kiểm tra ứng dụng đang chạy.'
+          : error.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+      } finally {
+        submitButton.disabled = false;
+        submitButton.querySelector('span').textContent = mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản';
+      }
+    }
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !document.getElementById('forgot-modal').hidden) {
+        closeForgotPassword();
+      }
     });
-    data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const d = data.detail;
-      throw new Error(typeof d === 'string' ? d : 'Email hoặc mật khẩu không chính xác');
-    }
 
-    saveSession(data);
-
-    if (data.role === 'admin') location.href = '/admin';
-    else location.href = '/';
-  } catch (ex) {
-    if (ex.message === 'Failed to fetch' || ex.name === 'TypeError') {
-      showErr('Không kết nối được server. Chạy: uvicorn main:app --reload --port 8000');
-    } else {
-      showErr(ex.message || 'Lỗi đăng nhập');
-    }
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = mode === 'login' ? 'Đăng nhập' : 'Đăng ký';
-  }
-}
-
-(async function () {
-  if (initializePasswordReset()) return;
-  const t = sessionStorage.getItem('token');
-  if (!t) return;
-  try {
-    const res = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + t } });
-    if (!res.ok) { clearSession(); return; }
-    const me = await res.json();
-    sessionStorage.setItem('role', me.role);
-    sessionStorage.setItem('full_name', me.full_name || '');
-    sessionStorage.setItem('email', me.email || '');
-    if (me.role === 'admin') location.href = '/admin';
-    else location.href = '/';
-  } catch (_) {}
-})();
-</script>
+    (async function redirectExistingSession() {
+      if (initializePasswordResetFromLink()) return;
+      const existingToken = sessionStorage.getItem('token');
+      if (!existingToken) return;
+      try {
+        const response = await fetch(API + '/api/auth/me', {
+          headers: { Authorization: 'Bearer ' + existingToken }
+        });
+        if (!response.ok) {
+          clearSession();
+          return;
+        }
+        const me = await response.json();
+        sessionStorage.setItem('role', me.role);
+        sessionStorage.setItem('full_name', me.full_name || '');
+        sessionStorage.setItem('email', me.email || '');
+        sessionStorage.setItem('avatar', me.avatar || '');
+        location.href = me.role === 'admin' ? '/admin' : '/';
+      } catch (_) {
+        showErr('Không thể xác minh phiên đăng nhập. Vui lòng thử lại.');
+      }
+    })();
+  </script>
 </body>
 </html>

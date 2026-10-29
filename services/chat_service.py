@@ -1,4 +1,4 @@
-"""Question -> facts -> prompt -> OpenAI -> validation -> persistence."""
+"""Question -> facts -> prompt -> AI provider -> validation -> persistence."""
 from datetime import datetime
 import logging
 import os

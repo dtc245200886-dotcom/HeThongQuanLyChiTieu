@@ -152,15 +152,14 @@ class SavingGoal(Base):
 
 class AILog(Base):
     """
-    Chỉ lưu metadata phục vụ admin audit.
-    KHÔNG lưu nội dung câu hỏi/trả lời chi tiết (bảo mật).
+    Lưu metadata phục vụ admin audit; các log mới không chứa nội dung chat.
     """
     __tablename__ = "ai_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     kind = Column(String(30), nullable=False)  # report | chat | suggest | predict
-    question = Column(Text, nullable=True)
+    question = Column(Text, nullable=True)  # Legacy column retained for existing databases.
     response_type = Column(String(20), nullable=True)
     status = Column(String(20), nullable=True)
     success = Column(Boolean, default=True)

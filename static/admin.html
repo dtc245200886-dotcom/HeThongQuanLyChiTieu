@@ -6,17 +6,19 @@
   <title>Admin - Chi tiêu AI</title>
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="stylesheet" href="/static/dashboard.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    .admin-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .admin-chart-grid .admin-panel{height:320px;min-height:0;overflow:hidden;display:flex;flex-direction:column}
-    .admin-chart-grid canvas{display:block!important;width:100%!important;height:240px!important;max-height:240px}
+    .admin-chart-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .admin-chart-grid .admin-panel{height:350px;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+    .admin-chart-grid canvas{display:block!important;width:100%!important;height:260px!important;max-height:260px}
     .chat-shell{grid-template-columns:280px minmax(0,1fr);width:100%;max-width:none;height:calc(100vh - 150px);min-height:620px;border-radius:12px}
-    @media(max-width:1024px){.admin-chart-grid{grid-template-columns:1fr}}
+    @media(max-width:1100px){.admin-chart-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:760px){.admin-chart-grid{grid-template-columns:1fr}}
     @media(max-width:768px){.chat-shell{grid-template-columns:1fr;height:680px;min-height:680px}.chat-history{max-height:190px;border-right:0;border-bottom:1px solid var(--line)}}
   </style>
   <script src="/static/app.js"></script>
@@ -47,7 +49,14 @@
   </aside>
   <main class="admin-main">
     <section id="admin-dashboard" class="admin-page active">
-      <h2>📊 Tổng quan hệ thống</h2>
+      <header class="dashboard-intro admin-dashboard-intro">
+        <div>
+          <span class="dashboard-kicker">TRUNG TÂM ĐIỀU HÀNH</span>
+          <h2>Tổng quan hệ thống</h2>
+          <p>Theo dõi hoạt động, tài chính và mức sử dụng AI trên toàn hệ thống.</p>
+        </div>
+        <span class="dashboard-period"><i class="fas fa-signal"></i> Dữ liệu tổng hợp</span>
+      </header>
       <div class="admin-stats">
         <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-users')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-users')}"><div>👥</div><span>Tổng người dùng</span><strong id="s-users">0</strong></div>
         <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('total-transactions')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('total-transactions')}"><div>💳</div><span>Tổng giao dịch</span><strong id="s-tx">0</strong></div>
@@ -58,8 +67,25 @@
         <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('ai-usage')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('ai-usage')}"><div>🤖</div><span>Lượt sử dụng AI</span><strong id="s-ai-usage">0</strong></div>
         <div class="admin-card clickable" tabindex="0" role="button" onclick="focusAdminStat('ai-generations')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();focusAdminStat('ai-generations')}"><div>📄</div><span>Báo cáo / gợi ý AI</span><strong id="s-ai-generations">0</strong></div>
       </div>
-      <p class="hint">Dữ liệu tổng hợp realtime từ <span id="database-type">database</span>. Nhấn thẻ để xem thống kê tương ứng.</p>
-      <div class="admin-chart-grid"><div class="admin-panel"><h3>Người dùng và giao dịch theo tháng</h3><canvas id="admin-activity-chart" height="150"></canvas></div><div class="admin-panel"><h3>Tổng thu và tổng chi theo tháng</h3><canvas id="admin-money-chart" height="150"></canvas></div><div class="admin-panel"><h3>Mức sử dụng AI theo tháng</h3><canvas id="admin-ai-chart" height="150"></canvas></div></div>
+      <p class="hint dashboard-admin-hint">Dữ liệu tổng hợp từ <span id="database-type">database</span>. Chọn thẻ chỉ số để xem thống kê chi tiết.</p>
+      <div class="dashboard-section-heading"><div><span class="dashboard-kicker">PHÂN TÍCH THEO THỜI GIAN</span><h3>Nhịp hoạt động hệ thống</h3></div><span>12 tháng gần nhất</span></div>
+      <div class="admin-chart-grid">
+        <section class="admin-panel dashboard-chart-card">
+          <div class="dashboard-chart-heading"><div><span class="dashboard-chart-kicker">TĂNG TRƯỞNG</span><h3>Người dùng và giao dịch</h3></div><span class="dashboard-chart-mark" aria-hidden="true"><i class="fas fa-users"></i></span></div>
+          <p class="dashboard-chart-description">Người dùng mới và số giao dịch theo tháng.</p>
+          <div class="dashboard-chart-canvas"><canvas id="admin-activity-chart" aria-label="Biểu đồ người dùng và giao dịch theo tháng"></canvas></div>
+        </section>
+        <section class="admin-panel dashboard-chart-card">
+          <div class="dashboard-chart-heading"><div><span class="dashboard-chart-kicker">DÒNG TIỀN</span><h3>Tổng thu và tổng chi</h3></div><span class="dashboard-chart-mark dashboard-chart-mark-warm" aria-hidden="true"><i class="fas fa-coins"></i></span></div>
+          <p class="dashboard-chart-description">So sánh giá trị thu chi được ghi nhận.</p>
+          <div class="dashboard-chart-canvas"><canvas id="admin-money-chart" aria-label="Biểu đồ tổng thu và tổng chi theo tháng"></canvas></div>
+        </section>
+        <section class="admin-panel dashboard-chart-card">
+          <div class="dashboard-chart-heading"><div><span class="dashboard-chart-kicker">MỨC SỬ DỤNG</span><h3>Hoạt động AI</h3></div><span class="dashboard-chart-mark dashboard-chart-mark-violet" aria-hidden="true"><i class="fas fa-wand-magic-sparkles"></i></span></div>
+          <p class="dashboard-chart-description">Lượt sử dụng AI theo từng tháng.</p>
+          <div class="dashboard-chart-canvas"><canvas id="admin-ai-chart" aria-label="Biểu đồ lượt sử dụng AI theo tháng"></canvas></div>
+        </section>
+      </div>
     </section>
 
     <section id="admin-users" class="admin-page">
@@ -247,10 +273,86 @@ function renderAdminCharts(points) {
   if (adminMoneyChart) adminMoneyChart.destroy();
   if (adminAIChart) adminAIChart.destroy();
   const labels = points.map(point => point.label);
-  const common = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true } } };
-  adminActivityChart = new Chart(document.getElementById('admin-activity-chart'), { type: 'line', data: { labels, datasets: [{ label: 'Người dùng mới', data: points.map(point => point.users), borderColor: '#1e3a5f', backgroundColor: 'rgba(30,58,95,.12)', tension: .25 }, { label: 'Giao dịch', data: points.map(point => point.transactions), borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,.12)', tension: .25 }] }, options: common });
-  adminMoneyChart = new Chart(document.getElementById('admin-money-chart'), { type: 'bar', data: { labels, datasets: [{ label: 'Tổng thu', data: points.map(point => point.income), backgroundColor: '#0f766e' }, { label: 'Tổng chi', data: points.map(point => point.expense), backgroundColor: '#8796a5' }] }, options: common });
-  adminAIChart = new Chart(document.getElementById('admin-ai-chart'), { type: 'line', data: { labels, datasets: [{ label: 'Lượt sử dụng AI', data: points.map(point => point.ai_usage), borderColor: '#6b7f91', backgroundColor: 'rgba(107,127,145,.12)', tension: .25 }] }, options: common });
+  const gridColor = 'rgba(94, 120, 111, .10)';
+  const tickColor = '#7b8b85';
+  const common = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 650 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: tickColor, usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 16, font: { family: 'DM Sans', size: 10, weight: '600' } }
+      },
+      tooltip: {
+        backgroundColor: '#173a34',
+        titleFont: { family: 'DM Sans', weight: '700' },
+        bodyFont: { family: 'DM Sans' },
+        padding: 11,
+        cornerRadius: 9,
+        displayColors: true,
+        usePointStyle: true
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { color: tickColor, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, font: { family: 'DM Sans', size: 9 } } },
+      y: { beginAtZero: true, grid: { color: gridColor, drawTicks: false }, border: { display: false }, ticks: { color: tickColor, padding: 8, precision: 0, font: { family: 'DM Sans', size: 9 } } }
+    }
+  };
+  adminActivityChart = new Chart(document.getElementById('admin-activity-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Người dùng mới', data: points.map(point => point.users), backgroundColor: '#3d77a8', borderRadius: 5, maxBarThickness: 15, categoryPercentage: .68, barPercentage: .82 },
+        { label: 'Giao dịch', data: points.map(point => point.transactions), backgroundColor: '#38a78c', borderRadius: 5, maxBarThickness: 15, categoryPercentage: .68, barPercentage: .82 }
+      ]
+    },
+    options: common
+  });
+  adminMoneyChart = new Chart(document.getElementById('admin-money-chart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Tổng thu', data: points.map(point => point.income), borderColor: '#14836e', backgroundColor: 'rgba(20,131,110,.10)', fill: true, tension: .38, borderWidth: 2.5, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
+        { label: 'Tổng chi', data: points.map(point => point.expense), borderColor: '#e18a5c', backgroundColor: 'rgba(225,138,92,.08)', fill: true, tension: .38, borderWidth: 2.5, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
+      ]
+    },
+    options: {
+      ...common,
+      scales: {
+        ...common.scales,
+        y: { ...common.scales.y, ticks: { ...common.scales.y.ticks, callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value) } }
+      },
+      plugins: {
+        ...common.plugins,
+        tooltip: { ...common.plugins.tooltip, callbacks: { label: context => `${context.dataset.label}: ${fmt(context.parsed.y)}` } }
+      }
+    }
+  });
+  adminAIChart = new Chart(document.getElementById('admin-ai-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Lượt sử dụng AI', data: points.map(point => point.ai_usage), backgroundColor: 'rgba(125, 102, 184, .82)', hoverBackgroundColor: '#755caf', borderRadius: 5, barThickness: 9, maxBarThickness: 11 }]
+    },
+    options: {
+      ...common,
+      indexAxis: 'y',
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: {
+        ...common.plugins,
+        legend: { display: false },
+        tooltip: { ...common.plugins.tooltip, callbacks: { label: context => `${context.parsed.x} lượt` } }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: gridColor, drawTicks: false }, border: { display: false }, ticks: { color: tickColor, precision: 0, padding: 6, font: { family: 'DM Sans', size: 9 } } },
+        y: { grid: { display: false }, border: { display: false }, ticks: { color: tickColor, autoSkip: true, maxTicksLimit: 9, font: { family: 'DM Sans', size: 9 } } }
+      }
+    }
+  });
 }
 
 async function loadStats() {
