@@ -16,7 +16,7 @@ MONEY_PATTERN = re.compile(
 
 
 def _parse_money(value: str) -> float | None:
-    """Parse Vietnamese thousands formats such as 538.000 and 1.138.000."""
+    """Parse common Vietnamese and international money formats."""
     value = value.lower().replace("đồng", "").replace("vnđ", "").replace("vnd", "").replace("đ", "")
     value = value.strip().replace(" ", "")
     if not value:
@@ -24,16 +24,22 @@ def _parse_money(value: str) -> float | None:
 
     separators = [index for index, char in enumerate(value) if char in ".,"]
     if not separators:
-        return float(value)
+        normalized = value
+    elif len({value[index] for index in separators}) == 1 and all(
+        len(group) == 3 for group in re.split(r"[.,]", value)[1:]
+    ):
+        normalized = re.sub(r"[.,]", "", value)
+    elif len(separators) == 1:
+        normalized = value.replace(value[separators[0]], ".")
+    else:
+        decimal_index = separators[-1]
+        whole = re.sub(r"[.,]", "", value[:decimal_index])
+        fraction = value[decimal_index + 1:]
+        normalized = f"{whole}.{fraction}"
 
-    groups = re.split(r"[.,]", value)
-    if len(groups) > 1 and all(len(group) == 3 for group in groups[1:]):
-        return float("".join(groups))
-
-    # Decimal notation is accepted for completeness, but is not treated as
-    # a financial fact unless it matches a value supplied by the database.
-    decimal_separator = "," if "," in value and "." not in value else "."
-    return float(value.replace(decimal_separator, "."))
+    if not re.fullmatch(r"\d+(?:\.\d+)?", normalized):
+        return None
+    return float(normalized)
 
 
 def _database_amounts(value: Any) -> list[float]:

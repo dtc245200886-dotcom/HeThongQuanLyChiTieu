@@ -1,7 +1,9 @@
 ﻿venv/
+venv312/
 .venv/
 .env
 *.db
+*.db.backup-*
 *.sqlite
 *.sqlite3
 __pycache__/

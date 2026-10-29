@@ -45,24 +45,26 @@ google-genai, tzdata, reportlab
 ### 1. Lay source va tao moi truong ao
 
 ```powershell
-git clone https://github.com/dtc245200886-dotcom/chi-tieu-ai.git
-cd chi-tieu-ai
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+git clone https://github.com/dtc245200886-dotcom/HeThongQuanLyChiTieu.git
+cd HeThongQuanLyChiTieu
+py -3.12 -m venv venv
+.\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 ```
 
 Tren macOS/Linux, dung cac lenh tuong duong:
 
 ```bash
-git clone https://github.com/dtc245200886-dotcom/chi-tieu-ai.git
-cd chi-tieu-ai
-python3.12 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/dtc245200886-dotcom/HeThongQuanLyChiTieu.git
+cd HeThongQuanLyChiTieu
+python3.12 -m venv venv
+source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `.venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
+Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
+
+Neu dung VS Code, cai extension **Python** cua Microsoft, mo Command Palette (`Ctrl+Shift+P`), chon **Python: Select Interpreter**, roi chon `.\venv\Scripts\python.exe`.
 
 ### 2. Cau hinh `.env`
 
@@ -132,7 +134,7 @@ Tai khoan admin mac dinh duoc tao khi khoi dong neu email trong `ADMIN_EMAIL` ch
 | --- | --- | --- |
 | Admin | `admin@gmail.com` | `admin123` |
 
-Hay doi `ADMIN_PASSWORD` truoc khi deploy. Neu email da ton tai trong database duoi vai tro user, ung dung khong tu dong nang quyen tai khoan do thanh admin. Mat khau trong `.env` cung chi duoc dung khi tao admin lan dau; thay bien nay khong doi mat khau cua tai khoan da ton tai. Source khong seed tai khoan user mau; nguoi dung thuong tu dang ky tai `/login`.
+Bang tren chi ap dung khi khong dat `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `.env`. Neu dung `.env.example`, hay thay cac gia tri mau truoc khi chay. Hay doi mat khau truoc khi deploy. Neu email da ton tai trong database duoi vai tro user, ung dung khong tu dong nang quyen tai khoan do thanh admin. Mat khau trong `.env` chi duoc dung khi tao admin lan dau; thay bien nay khong doi mat khau cua tai khoan da ton tai. Source khong seed tai khoan user mau; nguoi dung thuong tu dang ky tai `/login`.
 
 ## Chuc nang hien co
 

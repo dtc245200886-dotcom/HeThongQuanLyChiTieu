@@ -7,9 +7,10 @@
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/static/theme-overrides.css" />
+  <link rel="stylesheet" href="/static/dashboard.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -57,7 +58,14 @@
       </div>
     </div>
     <div id="page-dashboard" class="page active">
-      <h2 class="page-title">📊 Dashboard</h2>
+      <header class="dashboard-intro">
+        <div>
+          <span class="dashboard-kicker">KHÔNG GIAN TÀI CHÍNH CỦA BẠN</span>
+          <h2 class="page-title">Tổng quan tài chính</h2>
+          <p>Theo dõi dòng tiền và tiến độ mục tiêu của bạn trong một cái nhìn.</p>
+        </div>
+        <span class="dashboard-period"><i class="far fa-calendar"></i> Báo cáo cá nhân</span>
+      </header>
       <div class="stats-grid">
         <div class="stat-card"><div class="label">Thu nhập</div><div class="value green" id="sum-income">0đ</div></div>
         <div class="stat-card"><div class="label">Chi tiêu</div><div class="value red" id="sum-expense">0đ</div></div>
@@ -67,9 +75,17 @@
         <div class="stat-card"><div class="label">Mục tiêu hoàn thành</div><div class="value green" id="sum-goals-done">0</div></div>
         <div class="stat-card"><div class="label">Mục tiêu vượt kế hoạch</div><div class="value purple" id="sum-goals-over">0</div></div>
       </div>
-      <div class="charts-grid">
-        <div class="chart-card"><h3>Chi theo danh mục</h3><canvas id="chart-cat" height="220"></canvas></div>
-        <div class="chart-card"><h3>Thu / Chi theo tháng</h3><canvas id="chart-month" height="220"></canvas></div>
+      <div class="charts-grid dashboard-charts">
+        <section class="chart-card dashboard-chart-card category-chart-card">
+          <div class="dashboard-chart-heading"><div><span class="dashboard-chart-kicker">PHÂN BỔ CHI TIÊU</span><h3>Chi theo danh mục</h3></div><span class="dashboard-chart-mark" aria-hidden="true"><i class="fas fa-chart-pie"></i></span></div>
+          <p class="dashboard-chart-description">Xem các nhóm đang chiếm tỷ trọng lớn nhất.</p>
+          <div class="dashboard-chart-canvas category-chart-canvas"><canvas id="chart-cat" aria-label="Biểu đồ chi tiêu theo danh mục"></canvas></div>
+        </section>
+        <section class="chart-card dashboard-chart-card cashflow-chart-card">
+          <div class="dashboard-chart-heading"><div><span class="dashboard-chart-kicker">XU HƯỚNG DÒNG TIỀN</span><h3>Thu nhập và chi tiêu</h3></div><span class="dashboard-chart-mark" aria-hidden="true"><i class="fas fa-chart-line"></i></span></div>
+          <p class="dashboard-chart-description">So sánh thu nhập, chi tiêu và phần chênh lệch theo tháng.</p>
+          <div class="dashboard-chart-canvas"><canvas id="chart-month" aria-label="Biểu đồ dòng tiền theo tháng"></canvas></div>
+        </section>
       </div>
     </div>
 
@@ -460,21 +476,96 @@ async function loadDash() {
     if (chartCat) chartCat.destroy();
     chartCat = new Chart(document.getElementById('chart-cat'), {
       type: 'doughnut',
-      data: { labels: Object.keys(s.by_category), datasets: [{ data: Object.values(s.by_category), backgroundColor: ['#16a34a','#f97316','#2563eb','#c4b5fd','#86efac','#fdba74','#a78bfa'] }] },
-      options: { plugins: { legend: { position: 'bottom' } } }
+      data: {
+        labels: Object.keys(s.by_category),
+        datasets: [{
+          data: Object.values(s.by_category),
+          backgroundColor: ['#13836f','#e3a24d','#4b82b7','#8d78be','#45a899','#e17f64','#78915a','#b9789a'],
+          borderColor: '#fff',
+          borderWidth: 3,
+          borderRadius: 4,
+          hoverOffset: 7,
+          spacing: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        layout: { padding: 8 },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#71817e', usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 14, font: { family: 'DM Sans', size: 10, weight: '600' } }
+          },
+          tooltip: {
+            backgroundColor: '#173a34',
+            padding: 11,
+            cornerRadius: 9,
+            usePointStyle: true,
+            callbacks: { label: context => `${context.label}: ${fmt(context.parsed)}` }
+          }
+        }
+      },
+      plugins: [{
+        id: 'categoryCenter',
+        afterDraw(chart) {
+          const total = chart.data.datasets[0].data.reduce((sum, amount) => sum + Number(amount || 0), 0);
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return;
+          const centerX = (chartArea.left + chartArea.right) / 2;
+          const centerY = (chartArea.top + chartArea.bottom) / 2;
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#172f2c';
+          ctx.font = '800 18px Manrope, sans-serif';
+          ctx.fillText(new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(total), centerX, centerY - 5);
+          ctx.fillStyle = '#87958f';
+          ctx.font = '700 8px "DM Sans", sans-serif';
+          ctx.fillText('TỔNG CHI', centerX, centerY + 13);
+          ctx.restore();
+        }
+      }]
     });
     if (chartMonth) chartMonth.destroy();
     chartMonth = new Chart(document.getElementById('chart-month'), {
-      type: 'bar',
+      type: 'line',
       data: {
         labels: s.by_month.map(m => 'T' + m.month),
         datasets: [
-          { label: 'Thu nhập', data: s.by_month.map(m => m.income), backgroundColor: '#16a34a' },
-          { label: 'Chi tiêu', data: s.by_month.map(m => m.expense), backgroundColor: '#f97316' },
-          { label: 'Tiết kiệm', data: s.by_month.map(m => Math.max(0, m.income - m.expense)), backgroundColor: '#2563eb' }
+          { label: 'Thu nhập', data: s.by_month.map(m => m.income), borderColor: '#13836f', backgroundColor: 'rgba(19,131,111,.08)', fill: true, tension: .38, borderWidth: 2.5, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
+          { label: 'Chi tiêu', data: s.by_month.map(m => m.expense), borderColor: '#df805e', backgroundColor: 'rgba(223,128,94,.07)', fill: true, tension: .38, borderWidth: 2.5, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
+          { label: 'Tiết kiệm', data: s.by_month.map(m => Math.max(0, m.income - m.expense)), borderColor: '#6382b5', backgroundColor: 'transparent', fill: false, tension: .38, borderWidth: 2, borderDash: [5, 4], pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
         ]
       },
-      options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#71817e', usePointStyle: true, pointStyle: 'circle', boxWidth: 7, boxHeight: 7, padding: 16, font: { family: 'DM Sans', size: 10, weight: '600' } }
+          },
+          tooltip: {
+            backgroundColor: '#173a34',
+            padding: 11,
+            cornerRadius: 9,
+            usePointStyle: true,
+            callbacks: { label: context => `${context.dataset.label}: ${fmt(context.parsed.y)}` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#7b8b85', maxRotation: 0, font: { family: 'DM Sans', size: 9 } } },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(94, 120, 111, .10)', drawTicks: false },
+            border: { display: false },
+            ticks: { color: '#7b8b85', padding: 8, callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value), font: { family: 'DM Sans', size: 9 } }
+          }
+        }
+      }
     });
   } catch (e) { toast(e.message, false); }
 }
