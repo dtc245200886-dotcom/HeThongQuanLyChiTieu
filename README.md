@@ -71,10 +71,14 @@ Neu dung VS Code, cai extension **Python** cua Microsoft, mo Command Palette (`C
 Tao file `.env` tu mau:
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env } else { Write-Host ".env da ton tai; giu nguyen cau hinh hien tai." }
 ```
 
-Tren macOS/Linux, dung `cp .env.example .env`.
+Tren macOS/Linux, dung lenh sau de khong ghi de `.env` da co:
+
+```bash
+if [ ! -f .env ]; then cp .env.example .env; else echo ".env da ton tai; giu nguyen cau hinh hien tai."; fi
+```
 
 Khong commit `.env`. File nay chua database URL, JWT secret, mat khau admin va API key.
 
@@ -257,11 +261,11 @@ Parser thoi gian trong chatbot chi nhan dien cac khoang `hom nay`, `tuan nay`, `
 
 ## Cau truc thu muc
 
-Cay duoi day doi chieu theo thu muc source hien tai. Ten thu muc local la `Hệ thống quản lí chi tiêu`; khi clone repository bang lenh o tren, Git tao thu muc `chi-tieu-ai`. `.git/` la metadata cua Git nen khong hien trong cay. Cac muc danh dau **local** khong duoc commit va duoc `.gitignore` bo qua; tren may moi, `.env`, database va `.venv/` chi xuat hien sau khi duoc tao.
+Cay duoi day doi chieu theo repository `HeThongQuanLyChiTieu`; clone bang lenh o tren se tao thu muc cung ten. `.git/` la metadata cua Git nen khong hien trong cay. Cac muc danh dau **local** khong duoc commit va duoc `.gitignore` bo qua; tren may moi, `.env`, database va `venv/` chi xuat hien sau khi duoc tao.
 
 ```text
-Hệ thống quản lí chi tiêu/ (project root)
-├── .venv/                    # local: Python virtual environment
+HeThongQuanLyChiTieu/ (project root)
+├── venv/                     # local: Python virtual environment
 ├── migrations/
 │   ├── 001_mysql_chat.sql
 │   ├── 002_login_bruteforce.sql
@@ -285,6 +289,8 @@ Hệ thống quản lí chi tiêu/ (project root)
 ├── static/
 │   ├── admin.html            # Giao dien admin
 │   ├── app.js                # API helper, session va UI dung chung
+│   ├── auth.css              # Giao dien dang nhap
+│   ├── dashboard.css         # Giao dien dashboard
 │   ├── index.html            # Giao dien user
 │   ├── login.html            # Dang nhap, dang ky, reset password
 │   ├── style.css             # Style chinh
@@ -303,7 +309,7 @@ Hệ thống quản lí chi tiêu/ (project root)
 ├── requirements.txt          # Python dependencies
 ```
 
-`.env`, `chi_tieu_ai.db`, `.venv/` va `__pycache__/` la cac tep/thu muc local,
+`.env`, `chi_tieu_ai.db`, `venv/` va `__pycache__/` la cac tep/thu muc local,
 duoc bo qua trong Git va co the chua/xuat hien khac nhau tren tung may. Khong xoa
 `.env` hoac database neu dang su dung; database chua tai khoan va du lieu thu chi.
 
@@ -312,7 +318,7 @@ duoc bo qua trong Git va co the chua/xuat hien khac nhau tren tung may. Khong xo
 Tu thu muc goc, chay bo kiem thu bang Python co san:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 Bo kiem thu dung SQLite tam va tu don dep sau khi chay.
@@ -324,8 +330,8 @@ Tren macOS/Linux, co the chay bang `python -m unittest discover -s tests -v`.
 | --- | --- |
 | Khong co `.env` hoac app dung config mac dinh | Copy `.env.example` thanh `.env`, dien `DATABASE_URL`, `SECRET_KEY` va thong tin admin. Khoi dong lai Uvicorn sau khi sua bien moi truong. |
 | Khong ket noi database | Kiem tra `DATABASE_URL`, MySQL co dang chay, user/password/database ton tai. Co the doi tam sang `sqlite:///./chi_tieu_ai.db`. |
-| PowerShell khong cho kich hoat `.venv` | Trong cua so hien tai, chay `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, sau do kich hoat lai virtual environment. |
-| `ModuleNotFoundError` | Kich hoat `.venv` va chay `python -m pip install -r requirements.txt`. |
+| PowerShell khong cho kich hoat `venv` | Trong cua so hien tai, chay `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, sau do kich hoat lai virtual environment. |
+| `ModuleNotFoundError` | Kich hoat `venv` va chay `python -m pip install -r requirements.txt`. |
 | `No time zone found with key Asia/Ho_Chi_Minh` | Cai lai dependencies; `tzdata` da co trong requirements de ho tro Windows. |
 | Gemini bao `401`/`403` | Kiem tra `GEMINI_API_KEY` la mot key hop le, khong co khoang trang/key noi chuoi; tao key moi neu key da bi thu hoi. |
 | Gemini bao `404 NOT_FOUND` | Model trong `GEMINI_MODEL` khong kha dung cho tai khoan. Dung model ma Gemini API thong bao ho tro; `gemini-3.5-flash-lite` chi la gia tri mac dinh trong source, khong dam bao model con duoc provider cung cap. |
@@ -337,7 +343,7 @@ Tren macOS/Linux, co the chay bang `python -m unittest discover -s tests -v`.
 
 ## Bao mat khi dua len GitHub
 
-- Khong commit `.env`, `chi_tieu_ai.db`, `.venv/` hoac `__pycache__/`.
+- Khong commit `.env`, `chi_tieu_ai.db`, `venv/` hoac `__pycache__/`.
 - Thu hoi va thay API key neu key tung xuat hien trong commit, screenshot hoac log chia se.
 - Dung secret manh cho `SECRET_KEY` va doi `ADMIN_PASSWORD` mac dinh truoc khi deploy.
 - Gioi han CORS theo domain cua ung dung truoc khi public; source hien tai cho phep moi origin.

@@ -1,11 +1,12 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMP_DATABASE = tempfile.TemporaryDirectory(prefix="chi-tieu-ai-tests-")
@@ -25,6 +26,8 @@ from fastapi.testclient import TestClient
 
 import main
 from services import password_reset_email
+from services.financial_analyzer import analyze_system
+from services.question_parser import parse_question
 
 
 class ProjectAuditTests(unittest.TestCase):
@@ -142,6 +145,51 @@ class ProjectAuditTests(unittest.TestCase):
             headers=self.auth_headers,
         )
         self.assertEqual(response.status_code, 422)
+
+    def test_admin_financial_facts_are_filtered_to_requested_period(self):
+        with Session(main.engine) as db:
+            user = db.query(main.User).filter(
+                main.User.email == "audit-user@example.com"
+            ).one()
+            transactions = [
+                main.Transaction(
+                    user_id=user.id,
+                    amount=10,
+                    type="expense",
+                    txn_date=date(2001, 1, 1),
+                ),
+                main.Transaction(
+                    user_id=user.id,
+                    amount=20,
+                    type="expense",
+                    txn_date=date(2000, 12, 31),
+                ),
+            ]
+            ai_logs = [
+                main.AILog(user_id=user.id, kind="chat", created_at=datetime(2001, 1, 1, 12)),
+                main.AILog(user_id=user.id, kind="chat", created_at=datetime(2000, 12, 31, 23, 59, 59)),
+            ]
+            db.add_all(transactions + ai_logs)
+            db.flush()
+            transaction_ids = [item.id for item in transactions]
+            ai_log_ids = [item.id for item in ai_logs]
+            db.commit()
+            try:
+                parsed = parse_question(
+                    "bao nhiêu giao dịch năm nay",
+                    today=date(2001, 6, 15),
+                )
+                facts = analyze_system(db, parsed)
+                self.assertEqual(facts["total_transactions"], 1)
+                self.assertEqual(facts["ai_requests"], 1)
+            finally:
+                db.query(main.Transaction).filter(
+                    main.Transaction.id.in_(transaction_ids)
+                ).delete(synchronize_session=False)
+                db.query(main.AILog).filter(
+                    main.AILog.id.in_(ai_log_ids)
+                ).delete(synchronize_session=False)
+                db.commit()
 
     def test_ai_status_does_not_make_provider_requests(self):
         with patch.object(main, "AI_PROVIDER", "gemini"), patch.dict(

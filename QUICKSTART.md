@@ -15,12 +15,20 @@ Tai lieu nay huong dan khoi dong he thong tren may local. Xem [README.md](README
 Mo PowerShell tai thu muc source:
 
 ```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+py -3.12 -m venv venv
+.\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 ```
 
-Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `.venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
+Tren macOS/Linux, tao va kich hoat moi truong `venv` bang cac lenh:
+
+```bash
+python3.12 -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
 
 Neu PowerShell chan script, chay lenh nay trong cua so PowerShell hien tai, sau do kich hoat lai virtual environment:
 
@@ -31,7 +39,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ## 3. Tao va cau hinh `.env`
 
 ```powershell
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env } else { Write-Host ".env da ton tai; giu nguyen cau hinh hien tai." }
 ```
 
 Dung SQLite de chay local nhanh:
@@ -101,7 +109,7 @@ Khong double-click cac file HTML va khong dung URL `file://`; phai truy cap qua 
 Chay kiem thu tu thu muc goc:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 ## 5. Tai khoan mac dinh
@@ -140,7 +148,7 @@ py -c "from services.gemini_service import ask_gemini; print(ask_gemini('Reply w
 
 | Hien tuong | Cach xu ly |
 | --- | --- |
-| `ModuleNotFoundError` | Kich hoat `.venv`, chay lai `py -m pip install -r requirements.txt`. |
+| `ModuleNotFoundError` | Kich hoat `venv`, chay lai `py -m pip install -r requirements.txt`. |
 | Khong ket noi MySQL | Kiem tra server MySQL, database da tao va `DATABASE_URL`; co the chuyen sang SQLite. |
 | `No time zone found with key Asia/Ho_Chi_Minh` | Cai lai dependencies de cai `tzdata`. |
 | `127.0.0.1 refused to connect` | Chay lai lenh Uvicorn va giu terminal dang chay. |

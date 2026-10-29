@@ -97,7 +97,13 @@ def analyze_system(db: Session, parsed: ParsedQuestion) -> dict:
         "end_date": parsed.end_date.isoformat(),
         "total_users": db.query(func.count(User.id)).filter(User.role != "admin").scalar() or 0,
         "active_users": db.query(func.count(User.id)).filter(User.role != "admin", User.status == "active").scalar() or 0,
-        "total_transactions": db.query(func.count(Transaction.id)).scalar() or 0,
-        "ai_requests": db.query(func.count(AILog.id)).scalar() or 0,
+        "total_transactions": db.query(func.count(Transaction.id)).filter(
+            Transaction.txn_date >= parsed.start_date,
+            Transaction.txn_date <= parsed.end_date,
+        ).scalar() or 0,
+        "ai_requests": db.query(func.count(AILog.id)).filter(
+            func.date(AILog.created_at) >= parsed.start_date,
+            func.date(AILog.created_at) <= parsed.end_date,
+        ).scalar() or 0,
         "private_data_access": False,
     }
