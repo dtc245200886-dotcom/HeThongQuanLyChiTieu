@@ -4,13 +4,13 @@ import logging
 import os
 from sqlalchemy.orm import Session
 
-from repositories.chat_repository import ChatRepository
-from services.financial_analyzer import analyze_finances, analyze_system
-from services.openai_service import OpenAIService
-from services.prompt_builder import build_prompt
-from services.question_parser import parse_question
-from services.response_validator import validate_response
-from services.gemini_service import ask_gemini, ask_gemini_with_image
+from backend.repositories.chat_repository import ChatRepository
+from backend.services.financial_analyzer import analyze_finances, analyze_system
+from backend.services.openai_service import OpenAIService
+from backend.services.prompt_builder import build_prompt
+from backend.services.question_parser import parse_question
+from backend.services.response_validator import validate_response
+from backend.services.gemini_service import ask_gemini, ask_gemini_with_image
 
 MAX_MESSAGES = int(os.getenv("MAX_CHAT_MESSAGES", "100"))
 MAX_TOKENS = int(os.getenv("MAX_CHAT_TOKENS", "50000"))

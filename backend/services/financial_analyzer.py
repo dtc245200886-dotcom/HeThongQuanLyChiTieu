@@ -4,8 +4,8 @@ from datetime import date, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import Budget, Category, SavingGoal, Transaction
-from services.question_parser import ParsedQuestion
+from backend.models import Budget, Category, SavingGoal, Transaction
+from backend.services.question_parser import ParsedQuestion
 
 
 def analyze_finances(db: Session, user_id: int, parsed: ParsedQuestion) -> dict:
@@ -89,7 +89,7 @@ def analyze_finances(db: Session, user_id: int, parsed: ParsedQuestion) -> dict:
 
 def analyze_system(db: Session, parsed: ParsedQuestion) -> dict:
     """Return aggregate metadata only; never load a user's private finance rows."""
-    from models import AILog, User
+    from backend.models import AILog, User
 
     return {
         "period": parsed.period,

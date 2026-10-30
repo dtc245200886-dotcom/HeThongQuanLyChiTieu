@@ -1,7 +1,7 @@
 """Persistence boundary for conversations and messages."""
 from sqlalchemy.orm import Session
 
-from models import ChatConversation, ChatMessage
+from backend.models import ChatConversation, ChatMessage
 
 
 class ChatRepository:

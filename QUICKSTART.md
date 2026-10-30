@@ -17,7 +17,7 @@ Mo PowerShell tai thu muc source:
 ```powershell
 py -3.12 -m venv venv
 .\venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 ```
 
 Tren macOS/Linux, tao va kich hoat moi truong `venv` bang cac lenh:
@@ -25,7 +25,7 @@ Tren macOS/Linux, tao va kich hoat moi truong `venv` bang cac lenh:
 ```bash
 python3.12 -m venv venv
 source venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 ```
 
 Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
@@ -90,7 +90,7 @@ Khong commit `.env`, vi file nay chua secret va thong tin ket noi database.
 ## 4. Chay server
 
 ```powershell
-python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Lan khoi dong dau tien se tao bang database, bo sung cac cot migration runtime, seed admin va danh muc mac dinh he thong.
@@ -109,7 +109,7 @@ Khong double-click cac file HTML va khong dung URL `file://`; phai truy cap qua 
 Chay kiem thu tu thu muc goc:
 
 ```powershell
-.\venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m unittest discover -s backend/tests -v
 ```
 
 ## 5. Tai khoan mac dinh
@@ -136,7 +136,7 @@ Endpoint nay chi cho biet provider va API key da duoc cau hinh; no khong goi Gem
 Hoac kiem tra tu terminal:
 
 ```powershell
-py -c "from services.gemini_service import ask_gemini; print(ask_gemini('Reply with OK only.'))"
+py -c "from backend.services.gemini_service import ask_gemini; print(ask_gemini('Reply with OK only.'))"
 ```
 
 - Neu tra `OK`, Gemini da ket noi.
@@ -148,7 +148,7 @@ py -c "from services.gemini_service import ask_gemini; print(ask_gemini('Reply w
 
 | Hien tuong | Cach xu ly |
 | --- | --- |
-| `ModuleNotFoundError` | Kich hoat `venv`, chay lai `py -m pip install -r requirements.txt`. |
+| `ModuleNotFoundError` | Kich hoat `venv`, chay lai `py -m pip install -r backend/requirements.txt`. |
 | Khong ket noi MySQL | Kiem tra server MySQL, database da tao va `DATABASE_URL`; co the chuyen sang SQLite. |
 | `No time zone found with key Asia/Ho_Chi_Minh` | Cai lai dependencies de cai `tzdata`. |
 | `127.0.0.1 refused to connect` | Chay lai lenh Uvicorn va giu terminal dang chay. |

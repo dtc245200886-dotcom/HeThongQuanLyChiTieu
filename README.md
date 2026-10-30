@@ -31,7 +31,7 @@ Ung dung web quan ly thu chi ca nhan, ngan sach va muc tieu tiet kiem. He thong 
 - SQLite khong can cai dat them; MySQL 8+ la tuy chon.
 - Ket noi Internet de tai cac tai nguyen giao dien tu CDN (Bootstrap, Chart.js, Font Awesome, Google Fonts va Confetti); API key chi can neu chon Gemini/OpenAI.
 
-Thu vien duoc khai bao trong [requirements.txt](requirements.txt):
+Thu vien duoc khai bao trong [backend/requirements.txt](backend/requirements.txt):
 
 ```text
 fastapi, uvicorn[standard], sqlalchemy, pymysql, cryptography,
@@ -49,7 +49,7 @@ git clone https://github.com/dtc245200886-dotcom/HeThongQuanLyChiTieu.git
 cd HeThongQuanLyChiTieu
 py -3.12 -m venv venv
 .\venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 ```
 
 Tren macOS/Linux, dung cac lenh tuong duong:
@@ -59,7 +59,7 @@ git clone https://github.com/dtc245200886-dotcom/HeThongQuanLyChiTieu.git
 cd HeThongQuanLyChiTieu
 python3.12 -m venv venv
 source venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 ```
 
 Neu doi phien ban Python hoac chuyen thu muc du an sang may khac, hay tao lai `venv`; virtual environment khong nen sao chep/tai su dung giua cac phien ban Python.
@@ -113,12 +113,12 @@ DATABASE_URL=mysql+pymysql://DB_USER:DB_PASSWORD@127.0.0.1:3306/chi_tieu_ai?char
 
 Thay `DB_USER` va `DB_PASSWORD` bang thong tin MySQL; neu mat khau co ky tu dac biet trong URL, hay URL-encode truoc khi dat vao `DATABASE_URL`.
 
-Khi khoi dong, ung dung tu tao cac bang SQLAlchemy, bo sung mot so cot qua runtime migration va seed admin/danh muc mac dinh neu can. Cac file SQL trong `migrations/` la script MySQL de tham khao/ap dung thu cong; ung dung khong tu dong chay cac file nay.
+Khi khoi dong, ung dung tu tao cac bang SQLAlchemy, bo sung mot so cot qua runtime migration va seed admin/danh muc mac dinh neu can. Cac file SQL trong `backend/migrations/` la script MySQL de tham khao/ap dung thu cong; ung dung khong tu dong chay cac file nay.
 
 ### 3. Chay ung dung
 
 ```powershell
-python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 | Dia chi | Noi dung |
@@ -203,7 +203,7 @@ So tien hien duoc luu bang kieu floating-point (`Float`), khong phai so thap pha
 
 Chatbot dung `AI_PROVIDER=gemini` de goi Gemini qua `google-genai` va `GEMINI_MODEL`, hoac `AI_PROVIDER=openai` de goi OpenAI-compatible API voi `OPENAI_API_KEY` va `OPENAI_MODEL`. Co the dat `OPENAI_BASE_URL` de dung endpoint tuong thich Chat Completions khac; `AI_API_KEY` van duoc chap nhan lam ten key cu neu chua dat `OPENAI_API_KEY`. `AI_PROVIDER=mock` (mac dinh) xu ly noi bo, khong goi API ben ngoai. Endpoint `GET /api/ai/status` chi kiem tra cau hinh, khong goi nha cung cap AI va khong xac nhan ket noi/quota.
 
-Khi provider AI ben ngoai tra loi thanh cong, response chat co `source: "AI"`. `AI_PROVIDER=mock` luon tra loi bang du lieu noi bo va co `source: "Fallback"` (day la hanh vi binh thuong, khong phai loi). Khi Gemini/OpenAI loi credential, model, mang, dich vu hoac quota, `services/chat_service.py` cung fallback sang du lieu tai chinh noi bo cua dung user va tra `source: "Fallback"`. Chat cua admin chi dung so lieu tong hop he thong; UI hien thi nguon AI hoac du lieu noi bo. Bao cao, goi y ngan sach va du doan muc tieu hien duoc tinh noi bo, response ghi `provider: "local"`.
+Khi provider AI ben ngoai tra loi thanh cong, response chat co `source: "AI"`. `AI_PROVIDER=mock` luon tra loi bang du lieu noi bo va co `source: "Fallback"` (day la hanh vi binh thuong, khong phai loi). Khi Gemini/OpenAI loi credential, model, mang, dich vu hoac quota, `backend/services/chat_service.py` cung fallback sang du lieu tai chinh noi bo cua dung user va tra `source: "Fallback"`. Chat cua admin chi dung so lieu tong hop he thong; UI hien thi nguon AI hoac du lieu noi bo. Bao cao, goi y ngan sach va du doan muc tieu hien duoc tinh noi bo, response ghi `provider: "local"`.
 
 Parser thoi gian trong chatbot chi nhan dien cac khoang `hom nay`, `tuan nay`, `nam nay`; cac cach hoi thoi gian khac mac dinh duoc tinh theo thang hien tai. `429 RESOURCE_EXHAUSTED` la loi quota/rate limit Gemini. Service phan loai loi nay la `quota_or_rate_limit`; chatbot se fallback thay vi dung toan bo luong. Kiem tra quota/billing cua project Gemini, doi model co quota phu hop, hoac thu lai sau thoi gian Google yeu cau. De thu ket noi that, chay lenh kiem tra Gemini trong [QUICKSTART.md](QUICKSTART.md); endpoint status khong tao request AI tinh phi. Fallback chi co du lieu tai chinh, nen cau hoi ngoai pham vi nhu phep tinh co the nhan tong thu/chi thay vi dap an tong quat khi Gemini khong san sang.
 
@@ -266,27 +266,16 @@ Cay duoi day doi chieu theo repository `HeThongQuanLyChiTieu`; clone bang lenh o
 ```text
 HeThongQuanLyChiTieu/ (project root)
 ├── venv/                     # local: Python virtual environment
-├── migrations/
-│   ├── 001_mysql_chat.sql
-│   ├── 002_login_bruteforce.sql
-│   ├── 003_password_reset.sql
-│   ├── 004_notification_type.sql
-│   └── 005_ai_logs_details.sql
-├── repositories/
-│   ├── __init__.py
-│   └── chat_repository.py    # Truy cap du lieu hoi thoai
-├── services/
-│   ├── __init__.py
-│   ├── ai_service.py         # Adapter REST Gemini legacy
-│   ├── chat_service.py       # Context tai chinh, fallback, luu hoi thoai
-│   ├── financial_analyzer.py # Tong hop facts tai chinh cho chat
-│   ├── gemini_service.py     # Gemini text/vision, retry va phan loai loi
-│   ├── openai_service.py     # Adapter OpenAI-compatible
-│   ├── password_reset_email.py # Gui email reset mat khau qua SMTP
-│   ├── prompt_builder.py     # Tao prompt chat
-│   ├── question_parser.py    # Nhan dien khoang thoi gian cau hoi
-│   └── response_validator.py # Kiem tra phan hoi AI
-├── static/
+├── backend/
+│   ├── migrations/           # SQL scripts cho MySQL
+│   ├── repositories/         # Truy cap du lieu
+│   ├── services/             # Business logic va AI providers
+│   ├── tests/                # Kiem thu cac luong va gioi han dau vao
+│   ├── database.py           # Engine/session SQLite hoac MySQL
+│   ├── main.py               # FastAPI routes, auth, CRUD, stats, admin
+│   ├── models.py             # SQLAlchemy models
+│   └── requirements.txt      # Python dependencies
+├── frontend/
 │   ├── admin.html            # Giao dien admin
 │   ├── app.js                # API helper, session va UI dung chung
 │   ├── auth.css              # Giao dien dang nhap
@@ -295,18 +284,12 @@ HeThongQuanLyChiTieu/ (project root)
 │   ├── login.html            # Dang nhap, dang ky, reset password
 │   ├── style.css             # Style chinh
 │   └── theme-overrides.css   # Tuy chinh giao dien
-├── tests/
-│   └── test_project_audit.py # Kiem thu cac luong va gioi han dau vao quan trong
 ├── .env                      # local: secret va cau hinh rieng
 ├── .env.example              # Mau bien moi truong, khong chua secret that
 ├── .gitignore                # Bo qua secrets, database va file tao tu dong
 ├── chi_tieu_ai.db            # local: SQLite database
-├── database.py               # Engine/session SQLite hoac MySQL
-├── main.py                   # FastAPI routes, auth, CRUD, stats, admin
-├── models.py                 # SQLAlchemy models va timestamp notification VN
 ├── QUICKSTART.md             # Cac buoc khoi dong nhanh tren may local
 ├── README.md                 # Tai lieu chinh: cai dat, chuc nang va xu ly loi
-├── requirements.txt          # Python dependencies
 ```
 
 `.env`, `chi_tieu_ai.db`, `venv/` va `__pycache__/` la cac tep/thu muc local,
@@ -318,11 +301,11 @@ duoc bo qua trong Git va co the chua/xuat hien khac nhau tren tung may. Khong xo
 Tu thu muc goc, chay bo kiem thu bang Python co san:
 
 ```powershell
-.\venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m unittest discover -s backend/tests -v
 ```
 
 Bo kiem thu dung SQLite tam va tu don dep sau khi chay.
-Tren macOS/Linux, co the chay bang `python -m unittest discover -s tests -v`.
+Tren macOS/Linux, co the chay bang `python -m unittest discover -s backend/tests -v`.
 
 ## Xu ly loi thuong gap
 
@@ -331,7 +314,7 @@ Tren macOS/Linux, co the chay bang `python -m unittest discover -s tests -v`.
 | Khong co `.env` hoac app dung config mac dinh | Copy `.env.example` thanh `.env`, dien `DATABASE_URL`, `SECRET_KEY` va thong tin admin. Khoi dong lai Uvicorn sau khi sua bien moi truong. |
 | Khong ket noi database | Kiem tra `DATABASE_URL`, MySQL co dang chay, user/password/database ton tai. Co the doi tam sang `sqlite:///./chi_tieu_ai.db`. |
 | PowerShell khong cho kich hoat `venv` | Trong cua so hien tai, chay `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, sau do kich hoat lai virtual environment. |
-| `ModuleNotFoundError` | Kich hoat `venv` va chay `python -m pip install -r requirements.txt`. |
+| `ModuleNotFoundError` | Kich hoat `venv` va chay `python -m pip install -r backend/requirements.txt`. |
 | `No time zone found with key Asia/Ho_Chi_Minh` | Cai lai dependencies; `tzdata` da co trong requirements de ho tro Windows. |
 | Gemini bao `401`/`403` | Kiem tra `GEMINI_API_KEY` la mot key hop le, khong co khoang trang/key noi chuoi; tao key moi neu key da bi thu hoi. |
 | Gemini bao `404 NOT_FOUND` | Model trong `GEMINI_MODEL` khong kha dung cho tai khoan. Dung model ma Gemini API thong bao ho tro; `gemini-3.5-flash-lite` chi la gia tri mac dinh trong source, khong dam bao model con duoc provider cung cap. |

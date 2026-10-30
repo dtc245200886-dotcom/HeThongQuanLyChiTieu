@@ -1,7 +1,7 @@
 """Build a grounded prompt: the model receives facts, not raw database access."""
 import json
 
-from services.question_parser import ParsedQuestion
+from backend.services.question_parser import ParsedQuestion
 
 
 def build_prompt(question: str, parsed: ParsedQuestion, facts: dict, history: list[dict]) -> list[dict]:

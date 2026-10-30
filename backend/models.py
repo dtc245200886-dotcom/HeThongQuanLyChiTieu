@@ -9,7 +9,7 @@ from sqlalchemy import (
     ForeignKey, Boolean, UniqueConstraint, Index, Enum as SAEnum
 )
 from sqlalchemy.orm import relationship
-from database import Base
+from backend.database import Base
 import enum
 
 

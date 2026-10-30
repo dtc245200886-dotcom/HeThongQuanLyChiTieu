@@ -24,10 +24,10 @@ os.environ.update(
 
 from fastapi.testclient import TestClient
 
-import main
-from services import password_reset_email
-from services.financial_analyzer import analyze_system
-from services.question_parser import parse_question
+from backend import main
+from backend.services import password_reset_email
+from backend.services.financial_analyzer import analyze_system
+from backend.services.question_parser import parse_question
 
 
 class ProjectAuditTests(unittest.TestCase):
@@ -54,6 +54,11 @@ class ProjectAuditTests(unittest.TestCase):
         cls.client_context.__exit__(None, None, None)
         main.engine.dispose()
         TEMP_DATABASE.cleanup()
+
+    def test_frontend_pages_and_assets_are_served(self):
+        for path in ("/", "/login", "/admin", "/static/style.css"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
 
     def test_password_limits_match_bcrypt_capacity(self):
         valid = "ValidPass123"
@@ -195,7 +200,7 @@ class ProjectAuditTests(unittest.TestCase):
         with patch.object(main, "AI_PROVIDER", "gemini"), patch.dict(
             os.environ, {"GEMINI_API_KEY": "test-key"}
         ), patch(
-            "services.gemini_service.ask_gemini",
+            "backend.services.gemini_service.ask_gemini",
             side_effect=AssertionError("Status endpoint must not call Gemini"),
         ) as ask_gemini:
             response = self.client.get(
@@ -206,7 +211,7 @@ class ProjectAuditTests(unittest.TestCase):
         ask_gemini.assert_not_called()
 
     def test_legacy_gemini_adapter_sends_api_key_in_header(self):
-        from services.ai_service import GeminiService
+        from backend.services.ai_service import GeminiService
 
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-api-key"}):
             service = GeminiService()
@@ -214,7 +219,7 @@ class ProjectAuditTests(unittest.TestCase):
         response.json.return_value = {
             "candidates": [{"content": {"parts": [{"text": "OK"}]}}]
         }
-        with patch("services.ai_service.httpx.post", return_value=response) as post:
+        with patch("backend.services.ai_service.httpx.post", return_value=response) as post:
             self.assertEqual(service.generate("hello"), "OK")
 
         request_url = post.call_args.args[0]

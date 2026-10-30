@@ -11,6 +11,7 @@ import io
 import hashlib
 import secrets
 from datetime import datetime, date, timedelta
+from pathlib import Path
 from typing import Optional, List
 
 from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, Response, UploadFile, File, Form
@@ -27,20 +28,20 @@ from sqlalchemy import func, inspect, text
 from dotenv import load_dotenv
 from urllib.parse import quote
 
-from database import engine, get_db, Base, DATABASE_URL
-from models import (
+from backend.database import engine, get_db, Base, DATABASE_URL
+from backend.models import (
     User, Category, Transaction, Budget, SavingGoal,
     AILog, AIGeneration, AIReport, SystemLog, DefaultCategory, ChatConversation, ChatMessage, Notification, ChatFeedback, PasswordResetToken
 )
-from services.chat_service import answer_chat
-from services.gemini_service import GeminiServiceError
-from services.password_reset_email import (
+from backend.services.chat_service import answer_chat
+from backend.services.gemini_service import GeminiServiceError
+from backend.services.password_reset_email import (
     PasswordResetEmailConfigurationError,
     ensure_password_reset_email_configured,
     send_password_reset_email,
 )
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 logger = logging.getLogger(__name__)
 
@@ -2067,7 +2068,7 @@ def admin_ai_logs(limit: int = 50, admin: User = Depends(require_admin), db: Ses
 
 
 # ---------- Serve frontend ----------
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = Path(__file__).resolve().parent.parent / "frontend"
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -2085,7 +2086,7 @@ def admin_page():
     path = os.path.join(STATIC_DIR, "admin.html")
     if os.path.isfile(path):
         return FileResponse(path, headers={"Cache-Control": "no-store"})
-    return {"message": "Đặt admin.html vào static/"}
+    return {"message": "Đặt admin.html vào frontend/"}
 
 
 @app.get("/login")
@@ -2093,4 +2094,4 @@ def login_page():
     path = os.path.join(STATIC_DIR, "login.html")
     if os.path.isfile(path):
         return FileResponse(path, headers={"Cache-Control": "no-store"})
-    return {"message": "Đặt login.html vào static/"}
+    return {"message": "Đặt login.html vào frontend/"}
